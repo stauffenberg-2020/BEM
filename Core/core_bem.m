@@ -33,12 +33,12 @@ function [output_details, output, BEM] = core_bem(rho, N, op_pts, BLD , AeroFlag
     BEM.sig = BEM.C*N./(2*pi.*BEM.r); % Solidity ratio
     BEM.CN = BEM.CL.*cosd(BEM.phi)+BEM.CD.*sind(BEM.phi); % Sectional Normal force coefficient
     BEM.CT = BEM.CL.*sind(BEM.phi)-BEM.CD.*cosd(BEM.phi); % Sectional Tangential force coefficient
-    try
+    
         if AeroFlags.induction
             for i=1:length(BEM.r) % Loop for different sections of the blade
                 for j=1:size(wsp,1) % Loop for different operating set points
-                    BEM.aA_new = 1./((4.*sind(BEM.phi).*sind(BEM.phi)./(BEM.sig.*BEM.CN))+1); % Calculating new axial induction factors
-                    BEM.aT_new = 1./((4.*sind(BEM.phi).*cosd(BEM.phi)./(BEM.sig.*BEM.CT))-1); % Calculating new axial induction factors
+                    BEM.aA_new(i,j) = 1./((4.*sind(BEM.phi(i,j)).*sind(BEM.phi(i,j))./(BEM.sig(i).*BEM.CN(i,j)))+1); % Calculating new axial induction factors
+                    BEM.aT_new(i,j) = 1./((4.*sind(BEM.phi(i,j)).*cosd(BEM.phi(i,j))./(BEM.sig(i).*BEM.CT(i,j)))-1); % Calculating new axial induction factors
                     iter=1;
                     while (abs(BEM.aA_new(i,j) - BEM.aA(i,j)) > 0.0001 || abs(BEM.aT_new(i,j) - BEM.aT(i,j)) > 0.0001) && iter < 1000 % Induction iteration
                         if BEM.aA_new(i,j) > 1.5, BEM.aA(i,j) = 1.5; elseif BEM.aA_new(i,j) < -1, BEM.aA(i,j) = -1; else, BEM.aA(i,j) = BEM.aA_new(i,j);end
@@ -46,6 +46,10 @@ function [output_details, output, BEM] = core_bem(rho, N, op_pts, BLD , AeroFlag
                         BEM.phi(i,j) = atan2d((wsp(j)'.*(1-BEM.aA(i,j))),(BEM.Omega_r(i,j).*(1+BEM.aT(i,j)))); % Calculating flow angle PHI [deg]
                         if AeroFlags.tip_loss
                             f(i,j) = (N/2).*(BEM.r(end)-BEM.r(i))./(BEM.r(i).*sind(BEM.phi(i,j)));
+                            if f(i,j)<0 % Reverse flow situation, Aero twist needs to be adjusted
+                                f(i,j) = 999;
+                                break
+                            end
                             BEM.F(i,j)=(2/pi).*acos(exp(-f(i,j)));
                         else
                             BEM.F(i,j)=1;
@@ -58,7 +62,7 @@ function [output_details, output, BEM] = core_bem(rho, N, op_pts, BLD , AeroFlag
                         BEM.CN(i,j) = BEM.CL(i,j).*cosd(BEM.phi(i,j))+BEM.CD(i,j).*sind(BEM.phi(i,j)); % Sectional Normal force coefficient (Thrust direction force coefficient)
                         BEM.CT(i,j) = BEM.CL(i,j).*sind(BEM.phi(i,j))-BEM.CD(i,j).*cosd(BEM.phi(i,j)); % Sectional Tangential force coefficient
                         if AeroFlags.highCT
-                            method = AeroFlags.highCT; % Method = 1 or 2. Method 2 is similar to Pyro. Method 1 is similar to VTS
+                            method = AeroFlags.highCT; % Method = 1 or 2
                             BEM.aA_new(i,j) = calc_ind_using_high_CT_approx(method, BEM.aA(i,j), BEM.F(i,j), BEM.phi(i,j), BEM.sig(i), BEM.CN(i,j));
                         else
                             BEM.aA_new(i,j) = 1./((4.*BEM.F(i,j).*sind(BEM.phi(i,j)).*sind(BEM.phi(i,j))./(BEM.sig(i).*BEM.CN(i,j)))+1); % Calculating new axial induction factors
@@ -70,18 +74,7 @@ function [output_details, output, BEM] = core_bem(rho, N, op_pts, BLD , AeroFlag
                 end
             end
         end
-        disp('BEM calculations successfully completed')
-    catch ME
-        fprintf('ERROR in blade station %0.3f(m) at wind speed = %0.2f(m/s) during induction iteration %d \n', round(BEM.r(i),2), wsp(j), iter)
-        if BEM.phi(i,j) < 0
-            fprintf('Possible details : Axial induction of %0.2f & Tangential Induction = %0.2f results in negative flow angle of %0.2f degrees \n', BEM.aA(i,j), BEM.aT(i,j), BEM.phi(i,j))
-        end
-        fprintf('Debugging details : \n')
-        for i = 1:numel(ME.stack)
-            disp(ME.stack(i))
-        end
-        fprintf('Warning : Outputs calculated only till error occurrence \n')
-    end
+        
     
     %% Sectional Calculations
     A = pi.*BEM.r(end).^2; % Actual Rotor area
@@ -89,8 +82,8 @@ function [output_details, output, BEM] = core_bem(rho, N, op_pts, BLD , AeroFlag
     Q_G = 0.5.*rho.*wsp'.*wsp'; % Dynamic pressure
     
     % Sectional loads in Blade root coords
-    BEM.FlapdF = Q_L.*BEM.C.*BEM.CN.*cosd(BEM.PreBendTwist); % Local Thrust/Normal force [N], SRRMA : Check this
-    BEM.Rad_dF = Q_L.*BEM.C.*BEM.CN.*sind(BEM.PreBendTwist); % Local Radial force [N], SRRMA : Check this
+    BEM.FlapdF = Q_L.*BEM.C.*BEM.CN.*cosd(BEM.PreBendTwist); % Local Thrust/Normal force [N], Check this
+    BEM.Rad_dF = Q_L.*BEM.C.*BEM.CN.*sind(BEM.PreBendTwist); % Local Radial force [N], Check this
     BEM.EdgedF = Q_L.*BEM.C.*BEM.CT; % Local Edge force [N]
     BEM.FlapdM = BEM.FlapdF.*(BEM.r-BEM.r(1))+BEM.Rad_dF.*(-BEM.preflap); % Local Flap Moment [Nm] at Hub end (or Blade root)
     BEM.EdgedM = BEM.EdgedF.*(BEM.r-BEM.r(1)); % Local Edge Moment [Nm] at Hub end (or Blade root)
@@ -180,7 +173,8 @@ function a = calc_ind_using_high_CT_approx(method, a_old, F, phi, sig, CN)
             p(4) = -sig.*CN;
             r = roots(p);
             r=r(imag(r)==0);
-            a = r(1);
+            [~,idx] = min(abs(r-a_old)); % Finding the positive root near to previous 'a'
+            a = r(idx);
         else
             a = 1./((4.*F.*sind(phi).*sind(phi)./(sig.*CN))+1);
         end
