@@ -1,0 +1,6 @@
+# Ignore back up files
+*.bak
+*.asv
+
+# Ignore temporary folders
+Temp/

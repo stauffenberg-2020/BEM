@@ -34,46 +34,46 @@ function [output_details, output, BEM] = core_bem(rho, N, op_pts, BLD , AeroFlag
     BEM.CN = BEM.CL.*cosd(BEM.phi)+BEM.CD.*sind(BEM.phi); % Sectional Normal force coefficient
     BEM.CT = BEM.CL.*sind(BEM.phi)-BEM.CD.*cosd(BEM.phi); % Sectional Tangential force coefficient
     
-        if AeroFlags.induction
-            for i=1:length(BEM.r) % Loop for different sections of the blade
-                for j=1:size(wsp,1) % Loop for different operating set points
-                    BEM.aA_new(i,j) = 1./((4.*sind(BEM.phi(i,j)).*sind(BEM.phi(i,j))./(BEM.sig(i).*BEM.CN(i,j)))+1); % Calculating new axial induction factors
-                    BEM.aT_new(i,j) = 1./((4.*sind(BEM.phi(i,j)).*cosd(BEM.phi(i,j))./(BEM.sig(i).*BEM.CT(i,j)))-1); % Calculating new axial induction factors
-                    iter=1;
-                    while (abs(BEM.aA_new(i,j) - BEM.aA(i,j)) > 0.0001 || abs(BEM.aT_new(i,j) - BEM.aT(i,j)) > 0.0001) && iter < 1000 % Induction iteration
-                        if BEM.aA_new(i,j) > 1.5, BEM.aA(i,j) = 1.5; elseif BEM.aA_new(i,j) < -1, BEM.aA(i,j) = -1; else, BEM.aA(i,j) = BEM.aA_new(i,j);end
-                        if BEM.aT_new(i,j) > 1,   BEM.aT(i,j) = 1;   elseif BEM.aT_new(i,j) < -1, BEM.aT(i,j) = -1; else, BEM.aT(i,j) = BEM.aT_new(i,j);end
-                        BEM.phi(i,j) = atan2d((wsp(j)'.*(1-BEM.aA(i,j))),(BEM.Omega_r(i,j).*(1+BEM.aT(i,j)))); % Calculating flow angle PHI [deg]
-                        if AeroFlags.tip_loss
-                            f(i,j) = (N/2).*(BEM.r(end)-BEM.r(i))./(BEM.r(i).*sind(BEM.phi(i,j)));
-                            if f(i,j)<0 % Reverse flow situation, Aero twist needs to be adjusted
-                                f(i,j) = 999;
-                                break
-                            end
-                            BEM.F(i,j)=(2/pi).*acos(exp(-f(i,j)));
-                        else
-                            BEM.F(i,j)=1;
+    if AeroFlags.induction
+        for i=1:length(BEM.r) % Loop for different sections of the blade
+            for j=1:size(wsp,1) % Loop for different operating set points
+                BEM.aA_new(i,j) = 1./((4.*sind(BEM.phi(i,j)).*sind(BEM.phi(i,j))./(BEM.sig(i).*BEM.CN(i,j)))+1); % Calculating new axial induction factors
+                BEM.aT_new(i,j) = 1./((4.*sind(BEM.phi(i,j)).*cosd(BEM.phi(i,j))./(BEM.sig(i).*BEM.CT(i,j)))-1); % Calculating new axial induction factors
+                iter=1;
+                while (abs(BEM.aA_new(i,j) - BEM.aA(i,j)) > 0.0001 || abs(BEM.aT_new(i,j) - BEM.aT(i,j)) > 0.0001) && iter < 1000 % Induction iteration
+                    if BEM.aA_new(i,j) > 1.5, BEM.aA(i,j) = 1.5; elseif BEM.aA_new(i,j) < -1, BEM.aA(i,j) = -1; else, BEM.aA(i,j) = BEM.aA_new(i,j);end
+                    if BEM.aT_new(i,j) > 1,   BEM.aT(i,j) = 1;   elseif BEM.aT_new(i,j) < -1, BEM.aT(i,j) = -1; else, BEM.aT(i,j) = BEM.aT_new(i,j);end
+                    BEM.phi(i,j) = atan2d((wsp(j)'.*(1-BEM.aA(i,j))),(BEM.Omega_r(i,j).*(1+BEM.aT(i,j)))); % Calculating flow angle PHI [deg]
+                    if AeroFlags.tip_loss
+                        f(i,j) = (N/2).*(BEM.r(end)-BEM.r(i))./(BEM.r(i).*sind(BEM.phi(i,j)));
+                        if f(i,j)<0 % Reverse flow situation, Aero twist needs to be adjusted
+                            f(i,j) = 999;
+                            break
                         end
-                        BEM.alpha(i,j) = BEM.phi(i,j)-BEM.AeroTwist(i)-pitch(j)'; % Angle of attack seen by each section [deg]
-                        if BEM.alpha(i,j) < -180 || BEM.alpha(i,j) > 180
-                            BEM.alpha(i,j) = mod(BEM.alpha(i,j), 180); % Check here once
-                        end
-                        [BEM.CL(i,j), BEM.CD(i,j)] = CL_CD_vs_alpha(BEM.t_C(i), BLD.pro_t_C, BLD.pro_AoA, BLD.pro_cL, BLD.pro_cD, BEM.alpha(i,j)); % CL, CD coefficients
-                        BEM.CN(i,j) = BEM.CL(i,j).*cosd(BEM.phi(i,j))+BEM.CD(i,j).*sind(BEM.phi(i,j)); % Sectional Normal force coefficient (Thrust direction force coefficient)
-                        BEM.CT(i,j) = BEM.CL(i,j).*sind(BEM.phi(i,j))-BEM.CD(i,j).*cosd(BEM.phi(i,j)); % Sectional Tangential force coefficient
-                        if AeroFlags.highCT
-                            method = AeroFlags.highCT; % Method = 1 or 2
-                            BEM.aA_new(i,j) = calc_ind_using_high_CT_approx(method, BEM.aA(i,j), BEM.F(i,j), BEM.phi(i,j), BEM.sig(i), BEM.CN(i,j));
-                        else
-                            BEM.aA_new(i,j) = 1./((4.*BEM.F(i,j).*sind(BEM.phi(i,j)).*sind(BEM.phi(i,j))./(BEM.sig(i).*BEM.CN(i,j)))+1); % Calculating new axial induction factors
-                        end
-                        BEM.aT_new(i,j) = 1./((4.*BEM.F(i,j).*sind(BEM.phi(i,j)).*cosd(BEM.phi(i,j))./(BEM.sig(i).*BEM.CT(i,j)))-1); % Calculating new axial induction factors
-                        iter=iter+1;
+                        BEM.F(i,j)=(2/pi).*acos(exp(-f(i,j)));
+                    else
+                        BEM.F(i,j)=1;
                     end
-                    BEM.iter_count(i,j)=iter; % Induction iteration counter
+                    BEM.alpha(i,j) = BEM.phi(i,j)-BEM.AeroTwist(i)-pitch(j)'; % Angle of attack seen by each section [deg]
+                    if BEM.alpha(i,j) < -180 || BEM.alpha(i,j) > 180
+                        BEM.alpha(i,j) = mod(BEM.alpha(i,j), 180); % Check here once
+                    end
+                    [BEM.CL(i,j), BEM.CD(i,j)] = CL_CD_vs_alpha(BEM.t_C(i), BLD.pro_t_C, BLD.pro_AoA, BLD.pro_cL, BLD.pro_cD, BEM.alpha(i,j)); % CL, CD coefficients
+                    BEM.CN(i,j) = BEM.CL(i,j).*cosd(BEM.phi(i,j))+BEM.CD(i,j).*sind(BEM.phi(i,j)); % Sectional Normal force coefficient (Thrust direction force coefficient)
+                    BEM.CT(i,j) = BEM.CL(i,j).*sind(BEM.phi(i,j))-BEM.CD(i,j).*cosd(BEM.phi(i,j)); % Sectional Tangential force coefficient
+                    if AeroFlags.highCT
+                        method = AeroFlags.highCT; % Method = 1 or 2
+                        BEM.aA_new(i,j) = calc_ind_using_high_CT_approx(method, BEM.aA(i,j), BEM.F(i,j), BEM.phi(i,j), BEM.sig(i), BEM.CN(i,j));
+                    else
+                        BEM.aA_new(i,j) = 1./((4.*BEM.F(i,j).*sind(BEM.phi(i,j)).*sind(BEM.phi(i,j))./(BEM.sig(i).*BEM.CN(i,j)))+1); % Calculating new axial induction factors
+                    end
+                    BEM.aT_new(i,j) = 1./((4.*BEM.F(i,j).*sind(BEM.phi(i,j)).*cosd(BEM.phi(i,j))./(BEM.sig(i).*BEM.CT(i,j)))-1); % Calculating new axial induction factors
+                    iter=iter+1;
                 end
+                BEM.iter_count(i,j)=iter; % Induction iteration counter
             end
         end
+    end
         
     
     %% Sectional Calculations
@@ -132,23 +132,21 @@ end
 function [CL, CD] = CL_CD_vs_alpha(all_sect_t_C, available_t_C, alpha, cL, cD, target_alpha)
     for i=1:length(all_sect_t_C)
         for j=1:size(target_alpha,2)
-            try
+            if any(all_sect_t_C(i) == available_t_C)
                 id(i,1) = find(all_sect_t_C(i) == available_t_C); 
                 CL(i,j) = interp1(alpha,cL(:,id(i,1)),target_alpha(i,j)); % Interpolation for CL on an existing CLa curve
                 CD(i,j) = interp1(alpha,cD(:,id(i,1)),target_alpha(i,j));
-            catch
-                if all_sect_t_C(i)>100 % Profile data correction
-                    id(i,1) = find(100 == available_t_C); 
-                    CL(i,j) = interp1(alpha,cL(:,id(i,1)),target_alpha(i,j)); % Interpolation for CL on 100% t/c CLa curve
-                    CD(i,j) = interp1(alpha,cD(:,id(i,1)),target_alpha(i,j));
-                else
-                    id(i,1) = first_lower(available_t_C, all_sect_t_C(i));
-                    id(i,2) = first_higher(available_t_C, all_sect_t_C(i));
-                    new_CL_profi(:,1) = cL(:,id(i,1)) + (cL(:,id(i,2))-cL(:,id(i,1))).*(all_sect_t_C(i)-available_t_C(id(i,1)))./(available_t_C(id(i,2))-available_t_C(id(i,1))); % ((y-y1)/(x-x1)) = ((y2-y1)/(x2-x1))
-                    new_CD_profi(:,1) = cD(:,id(i,1)) + (cD(:,id(i,2))-cD(:,id(i,1))).*(all_sect_t_C(i)-available_t_C(id(i,1)))./(available_t_C(id(i,2))-available_t_C(id(i,1)));
-                    CL(i,j) = interp1(alpha,new_CL_profi,target_alpha(i,j)); % Interpolation for CL over the t/C ratio specific CLa curve
-                    CD(i,j) = interp1(alpha,new_CD_profi,target_alpha(i,j));
-                end
+            elseif all_sect_t_C(i)>100 % Profile data correction
+                id(i,1) = find(100 == available_t_C); 
+                CL(i,j) = interp1(alpha,cL(:,id(i,1)),target_alpha(i,j)); % Interpolation for CL on 100% t/c CLa curve
+                CD(i,j) = interp1(alpha,cD(:,id(i,1)),target_alpha(i,j));
+            else
+                id(i,1) = first_lower(available_t_C, all_sect_t_C(i));
+                id(i,2) = first_higher(available_t_C, all_sect_t_C(i));
+                new_CL_profi(:,1) = cL(:,id(i,1)) + (cL(:,id(i,2))-cL(:,id(i,1))).*(all_sect_t_C(i)-available_t_C(id(i,1)))./(available_t_C(id(i,2))-available_t_C(id(i,1))); % ((y-y1)/(x-x1)) = ((y2-y1)/(x2-x1))
+                new_CD_profi(:,1) = cD(:,id(i,1)) + (cD(:,id(i,2))-cD(:,id(i,1))).*(all_sect_t_C(i)-available_t_C(id(i,1)))./(available_t_C(id(i,2))-available_t_C(id(i,1)));
+                CL(i,j) = interp1(alpha,new_CL_profi,target_alpha(i,j)); % Interpolation for CL over the t/C ratio specific CLa curve
+                CD(i,j) = interp1(alpha,new_CD_profi,target_alpha(i,j));
             end
         end
     end
