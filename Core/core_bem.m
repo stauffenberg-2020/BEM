@@ -1,4 +1,4 @@
-function [output_details, output, BEM] = core_bem(rho, N, op_pts, BLD , AeroFlags)
+function [output_details, output, BEM] = core_bem(General, op_pts, BLD)
     % Core steady state BEM calculations
     % Inputs
     % 
@@ -16,10 +16,10 @@ function [output_details, output, BEM] = core_bem(rho, N, op_pts, BLD , AeroFlag
     pitch = op_pts.pitch;
     rpm = op_pts.rpm;
 
-    BEM.r = BLD.sec_r; % Blade stations
-    BEM.C = BLD.sec_C; % Chord distribution
-    BEM.t_C = BLD.sec_t_C; % t/C distribution
-    BEM.AeroTwist = BLD.sec_twist; % Aerodynamic (mold) Twist distribution [deg]
+    BEM.r = BLD.r; % Blade stations
+    BEM.C = BLD.C; % Chord distribution
+    BEM.t_C = BLD.t_C; % t/C distribution
+    BEM.AeroTwist = BLD.AeroTwist; % Aerodynamic (mold) Twist distribution [deg]
     BEM.preflap = BLD.preflap; % Pre-bend distribution (m)
     BEM.PreBendTwist = calc_twist(BEM.r, BEM.preflap); % Pre-bend angle w.r.t root [deg]
     
@@ -30,11 +30,11 @@ function [output_details, output, BEM] = core_bem(rho, N, op_pts, BLD , AeroFlag
     BEM.phi = atan2d((wsp'.*(1-BEM.aA)),(BEM.Omega_r.*(1+BEM.aT))); % Calculating flow angle PHI [deg]
     BEM.alpha = BEM.phi-BEM.AeroTwist-pitch'; % Angle of attack seen by each section [deg]
     [BEM.CL, BEM.CD] = CL_CD_vs_alpha(BEM.t_C, BLD.pro_t_C, BLD.pro_AoA, BLD.pro_cL, BLD.pro_cD, BEM.alpha); % CL, CD coefficients
-    BEM.sig = BEM.C*N./(2*pi.*BEM.r); % Solidity ratio
+    BEM.sig = BEM.C*General.N./(2*pi.*BEM.r); % Solidity ratio
     BEM.CN = BEM.CL.*cosd(BEM.phi)+BEM.CD.*sind(BEM.phi); % Sectional Normal force coefficient
     BEM.CT = BEM.CL.*sind(BEM.phi)-BEM.CD.*cosd(BEM.phi); % Sectional Tangential force coefficient
     
-    if AeroFlags.induction
+    if General.induction
         for i=1:length(BEM.r) % Loop for different sections of the blade
             for j=1:size(wsp,1) % Loop for different operating set points
                 BEM.aA_new(i,j) = 1./((4.*sind(BEM.phi(i,j)).*sind(BEM.phi(i,j))./(BEM.sig(i).*BEM.CN(i,j)))+1); % Calculating new axial induction factors
@@ -44,8 +44,8 @@ function [output_details, output, BEM] = core_bem(rho, N, op_pts, BLD , AeroFlag
                     if BEM.aA_new(i,j) > 1.5, BEM.aA(i,j) = 1.5; elseif BEM.aA_new(i,j) < -1, BEM.aA(i,j) = -1; else, BEM.aA(i,j) = BEM.aA_new(i,j);end
                     if BEM.aT_new(i,j) > 1,   BEM.aT(i,j) = 1;   elseif BEM.aT_new(i,j) < -1, BEM.aT(i,j) = -1; else, BEM.aT(i,j) = BEM.aT_new(i,j);end
                     BEM.phi(i,j) = atan2d((wsp(j)'.*(1-BEM.aA(i,j))),(BEM.Omega_r(i,j).*(1+BEM.aT(i,j)))); % Calculating flow angle PHI [deg]
-                    if AeroFlags.tip_loss
-                        f(i,j) = (N/2).*(BEM.r(end)-BEM.r(i))./(BEM.r(i).*sind(BEM.phi(i,j)));
+                    if General.tip_loss
+                        f(i,j) = (General.N/2).*(BEM.r(end)-BEM.r(i))./(BEM.r(i).*sind(BEM.phi(i,j)));
                         if f(i,j)<0 % Reverse flow situation, Aero twist needs to be adjusted
                             f(i,j) = 999;
                             break
@@ -61,8 +61,8 @@ function [output_details, output, BEM] = core_bem(rho, N, op_pts, BLD , AeroFlag
                     [BEM.CL(i,j), BEM.CD(i,j)] = CL_CD_vs_alpha(BEM.t_C(i), BLD.pro_t_C, BLD.pro_AoA, BLD.pro_cL, BLD.pro_cD, BEM.alpha(i,j)); % CL, CD coefficients
                     BEM.CN(i,j) = BEM.CL(i,j).*cosd(BEM.phi(i,j))+BEM.CD(i,j).*sind(BEM.phi(i,j)); % Sectional Normal force coefficient (Thrust direction force coefficient)
                     BEM.CT(i,j) = BEM.CL(i,j).*sind(BEM.phi(i,j))-BEM.CD(i,j).*cosd(BEM.phi(i,j)); % Sectional Tangential force coefficient
-                    if AeroFlags.highCT
-                        method = AeroFlags.highCT; % Method = 1 or 2
+                    if General.highCT
+                        method = General.highCT; % Method = 1 or 2
                         BEM.aA_new(i,j) = calc_ind_using_high_CT_approx(method, BEM.aA(i,j), BEM.F(i,j), BEM.phi(i,j), BEM.sig(i), BEM.CN(i,j));
                     else
                         BEM.aA_new(i,j) = 1./((4.*BEM.F(i,j).*sind(BEM.phi(i,j)).*sind(BEM.phi(i,j))./(BEM.sig(i).*BEM.CN(i,j)))+1); % Calculating new axial induction factors
@@ -78,8 +78,8 @@ function [output_details, output, BEM] = core_bem(rho, N, op_pts, BLD , AeroFlag
     
     %% Sectional Calculations
     A = pi.*BEM.r(end).^2; % Actual Rotor area
-    Q_L = 0.5*rho.*BEM.V_Res.*BEM.V_Res; % Local Dynamic pressure for each station
-    Q_G = 0.5.*rho.*wsp'.*wsp'; % Dynamic pressure
+    Q_L = 0.5*General.rho.*BEM.V_Res.*BEM.V_Res; % Local Dynamic pressure for each station
+    Q_G = 0.5.*General.rho.*wsp'.*wsp'; % Dynamic pressure
     
     % Sectional loads in Blade root coords
     BEM.FlapdF = Q_L.*BEM.C.*BEM.CN.*cosd(BEM.PreBendTwist); % Local Thrust/Normal force [N], Check this
@@ -92,7 +92,7 @@ function [output_details, output, BEM] = core_bem(rho, N, op_pts, BLD , AeroFlag
     BEM.EdgedMC = BEM.EdgedF.*BEM.r; % Local Edge Moment [Nm] (w.r.t rotor center) in blade root coords
     
     % Full Rotor loads and coefficients
-    BEM.dT = 3.*BEM.FlapdF;
+    BEM.dT = General.N.*BEM.FlapdF;
     BEM.Ct = BEM.dT./(Q_G.*2.*pi.*BEM.r); % Local Thrust Coefficient from local Thrust
     
 
@@ -103,10 +103,10 @@ function [output_details, output, BEM] = core_bem(rho, N, op_pts, BLD , AeroFlag
     output(:,2) = (1/1000)*trapz(BEM.r(1:length(BEM.r)-1,:),BEM.EdgedF(1:length(BEM.r)-1,:)); % Edge Force [KN]
     output(:,3) = (1/1000)*trapz(BEM.r(1:length(BEM.r)-1,:),BEM.FlapdM(1:length(BEM.r)-1,:)); % Flap Moment [KNm]
     output(:,4) = (1/1000)*trapz(BEM.r(1:length(BEM.r)-1,:),BEM.EdgedM(1:length(BEM.r)-1,:)); % Edge Moment [KNm]
-    output(:,5) = (1/1000)*trapz(BEM.r(1:length(BEM.r)-1,:),BEM.EdgedMC(1:length(BEM.r)-1,:))*N; % Aerodynamic Torque [KNm]
+    output(:,5) = (1/1000)*trapz(BEM.r(1:length(BEM.r)-1,:),BEM.EdgedMC(1:length(BEM.r)-1,:))*General.N; % Aerodynamic Torque [KNm]
     output(:,6) = output(:,5).*(2*pi.*rpm/60); % Rotor Power [KW]
     output(:,7) = (output(:,6).*1000)./(Q_G'.*A.*wsp); % Rotor averaged Cp calculated from rotor power
-    output(:,8) = output(:,1)*N; % Aerodynamic Thrust [KN]
+    output(:,8) = output(:,1)*General.N; % Aerodynamic Thrust [KN]
     output(:,9) = (output(:,8).*1000)./(Q_G'.*A); % Rotor averaged Ct Calculated from rotor thrust
     
     output_details = {'Fy11h', 'Fx11h', '-Mx11h', 'My11h', 'Maero', 'P_rot', 'Cp', 'Fthr', 'Ct';
