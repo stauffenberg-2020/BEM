@@ -137,16 +137,16 @@ function [CL, CD] = CL_CD_vs_alpha(all_sect_t_C, available_t_C, alpha, cL, cD, t
                 CL(i,j) = interp1(alpha,cL(:,id(i,1)),target_alpha(i,j)); % Interpolation for CL on an existing CLa curve
                 CD(i,j) = interp1(alpha,cD(:,id(i,1)),target_alpha(i,j));
             elseif all_sect_t_C(i)>100 % Profile data correction
-                    id(i,1) = find(100 == available_t_C); 
-                    CL(i,j) = interp1(alpha,cL(:,id(i,1)),target_alpha(i,j)); % Interpolation for CL on 100% t/c CLa curve
-                    CD(i,j) = interp1(alpha,cD(:,id(i,1)),target_alpha(i,j));
-                else
-                    id(i,1) = first_lower(available_t_C, all_sect_t_C(i));
-                    id(i,2) = first_higher(available_t_C, all_sect_t_C(i));
-                    new_CL_profi(:,1) = cL(:,id(i,1)) + (cL(:,id(i,2))-cL(:,id(i,1))).*(all_sect_t_C(i)-available_t_C(id(i,1)))./(available_t_C(id(i,2))-available_t_C(id(i,1))); % ((y-y1)/(x-x1)) = ((y2-y1)/(x2-x1))
-                    new_CD_profi(:,1) = cD(:,id(i,1)) + (cD(:,id(i,2))-cD(:,id(i,1))).*(all_sect_t_C(i)-available_t_C(id(i,1)))./(available_t_C(id(i,2))-available_t_C(id(i,1)));
-                    CL(i,j) = interp1(alpha,new_CL_profi,target_alpha(i,j)); % Interpolation for CL over the t/C ratio specific CLa curve
-                    CD(i,j) = interp1(alpha,new_CD_profi,target_alpha(i,j));
+                id(i,1) = find(100 == available_t_C); 
+                CL(i,j) = interp1(alpha,cL(:,id(i,1)),target_alpha(i,j)); % Interpolation for CL on 100% t/c CLa curve
+                CD(i,j) = interp1(alpha,cD(:,id(i,1)),target_alpha(i,j));
+            else
+                id(i,1) = first_lower(available_t_C, all_sect_t_C(i));
+                id(i,2) = first_higher(available_t_C, all_sect_t_C(i));
+                new_CL_profi(:,1) = cL(:,id(i,1)) + (cL(:,id(i,2))-cL(:,id(i,1))).*(all_sect_t_C(i)-available_t_C(id(i,1)))./(available_t_C(id(i,2))-available_t_C(id(i,1))); % ((y-y1)/(x-x1)) = ((y2-y1)/(x2-x1))
+                new_CD_profi(:,1) = cD(:,id(i,1)) + (cD(:,id(i,2))-cD(:,id(i,1))).*(all_sect_t_C(i)-available_t_C(id(i,1)))./(available_t_C(id(i,2))-available_t_C(id(i,1)));
+                CL(i,j) = interp1(alpha,new_CL_profi,target_alpha(i,j)); % Interpolation for CL over the t/C ratio specific CLa curve
+                CD(i,j) = interp1(alpha,new_CD_profi,target_alpha(i,j));
             end
         end
     end
