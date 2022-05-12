@@ -45,12 +45,11 @@ function [output_details, output, BEM] = core_bem(General, op_pts, BLD)
                     if BEM.aT_new(i,j) > 1,   BEM.aT(i,j) = 1;   elseif BEM.aT_new(i,j) < -1, BEM.aT(i,j) = -1; else, BEM.aT(i,j) = BEM.aT_new(i,j);end
                     BEM.phi(i,j) = atan2d((wsp(j)'.*(1-BEM.aA(i,j))),(BEM.Omega_r(i,j).*(1+BEM.aT(i,j)))); % Calculating flow angle PHI [deg]
                     if General.tip_loss
-                        f(i,j) = (General.N/2).*(BEM.r(end)-BEM.r(i))./(BEM.r(i).*sind(BEM.phi(i,j)));
-                        if f(i,j)<0 % Reverse flow situation, Aero twist needs to be adjusted
-                            f(i,j) = 999;
-                            break
+                        BEM.f(i,j) = (General.N/2).*(BEM.r(end)-BEM.r(i))./(BEM.r(i).*sind(BEM.phi(i,j)));
+                        if BEM.f(i,j)<0 % Reverse flow situation, Aero twist needs to be adjusted
+                            BEM.f(i,j) = 999;
                         end
-                        BEM.F(i,j)=(2/pi).*acos(exp(-f(i,j)));
+                        BEM.F(i,j)=(2/pi).*acos(exp(-BEM.f(i,j)));
                     else
                         BEM.F(i,j)=1;
                     end
@@ -98,6 +97,11 @@ function [output_details, output, BEM] = core_bem(General, op_pts, BLD)
 
     
     %% Output calculations
+    output_details = {'Fy11h', 'Fx11h', '-Mx11h', 'My11h', 'Maero', 'P_rot', 'Cp', 'Fthr', 'Ct';
+                            'Flap_For', 'Edge_For', 'Flap_Mom', 'Edge_Mom', 'Aero_ Tor', 'Aero_Pow', 'Rotor_Cp','Aero_Thr','Rotor_Ct';
+                            '[kN]','[kN]','[kNm]','[kNm]','[kNm]','[kW]','[-]','[kN]','[-]'};
+    
+    output=zeros(length(wsp),length(output_details));
     
     output(:,1) = (1/1000)*trapz(BEM.r(1:length(BEM.r)-1,:),BEM.FlapdF(1:length(BEM.r)-1,:)); % Flap Force [KN], % Ignoring the influence of last section similar to VTS
     output(:,2) = (1/1000)*trapz(BEM.r(1:length(BEM.r)-1,:),BEM.EdgedF(1:length(BEM.r)-1,:)); % Edge Force [KN]
@@ -109,9 +113,7 @@ function [output_details, output, BEM] = core_bem(General, op_pts, BLD)
     output(:,8) = output(:,1)*General.N; % Aerodynamic Thrust [KN]
     output(:,9) = (output(:,8).*1000)./(Q_G'.*A); % Rotor averaged Ct Calculated from rotor thrust
     
-    output_details = {'Fy11h', 'Fx11h', '-Mx11h', 'My11h', 'Maero', 'P_rot', 'Cp', 'Fthr', 'Ct';
-                            'Flap Force', 'Edge Force', 'Flap Moment', 'Edge Moment', 'Aerodynamic Torque', 'Rotor Aerodynamic Power', 'Rotor Cp','Rotor Aerodynamic Thrust','Rotor Ct';
-                            '[kN]','[kN]','[kNm]','[kNm]','[kNm]','[kW]','[-]','[kN]','[-]'};
+    
     
 
 
@@ -130,6 +132,11 @@ function index = first_lower(A, target)
 end
 
 function [CL, CD] = CL_CD_vs_alpha(all_sect_t_C, available_t_C, alpha, cL, cD, target_alpha)
+    id = zeros(length(all_sect_t_C),1);
+    CL = zeros(length(all_sect_t_C),1);
+    CD = zeros(length(all_sect_t_C),1);
+    new_CL_profi = zeros(size(cL,1),1);
+    new_CD_profi = zeros(size(cL,1),1);
     for i=1:length(all_sect_t_C)
         for j=1:size(target_alpha,2)
             if any(all_sect_t_C(i) == available_t_C)
@@ -165,6 +172,7 @@ function a = calc_ind_using_high_CT_approx(method, a_old, F, phi, sig, CN)
             if isnan(F)
                 F=0;
             end
+            p=zeros(1,4);
             p(1) = 3.*F.*sind(phi).*sind(phi);
             p(2) = -5.*F.*sind(phi).*sind(phi)-sig.*CN;
             p(3) = 4.*F.*sind(phi).*sind(phi)+2.*sig.*CN;
