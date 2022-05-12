@@ -4,3 +4,6 @@
 
 # Ignore temporary folders
 Temp/
+
+# Ignore output in any folders
+*/output.txt
