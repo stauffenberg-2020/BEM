@@ -1,55 +1,80 @@
 function [General, op_pts, Blade] = read_turbine_file(file)
-
-    fid = fopen(file,'rt');
-    tline = fgetl(fid);
+%     coder.inline('never');
+    fid = fopen(file,'r');
+    
     i=1;
-    while ischar(tline)
-        filebyline{i,1} = tline;
+    while ~feof(fid)
         tline = fgetl(fid);
         i=i+1;
     end
+    n_lines =i-1;
     fclose(fid);
     
-    header_rows = strncmpi('#',filebyline,1);
-    header_row_ids = find(header_rows);
-    header_titles = filebyline(header_row_ids);
-    for i=1:length(header_titles)
-        header_titles(i,:) = extractAfter(header_titles(i),'# ');
-        header_titles(i,:) = strtrim(header_titles(i));
+    fid = fopen(file,'r');
+    filebyline = cell(n_lines,1);
+    
+    for i=1:n_lines
+        filebyline{i,1} = fgetl(fid);
     end
-
+    fclose(fid);
+    
+    header_rows = zeros(n_lines,1);
+    for i=1:n_lines
+        header_rows(i,1) = strncmpi('#',filebyline{i},1);
+    end
+    header_row_ids = find(header_rows);
+    header_titles = cell(1,4); % Manually defined to have 4 headers, GENERAL, OPERATIONAL_SET-POINTS, BLADE_DETAILS, AEROFOIL_FILE
+    for i=1:4
+        header_titl = filebyline{header_row_ids(i)};
+        header_titles{i} = extractAfter(header_titl,'# ');
+        header_titles{i} = strtrim(header_titles{i});
+    end
+    
+    % Pre-initilization of structures for MATLAB Coder compatibility
+    General = struct('N',0,'rho',0,'induction',0,'tip_loss',0,'highCT',0);
+    coder.cstructname(General,'General');
+    op_pts = struct('wsp',0,'pitch',0,'rpm',0);
+    Blade = struct('r',0,'C',0,'t_C',0,'AeroTwist',0,'preflap',0,'pro_t_C',0,'pro_AoA',0,'pro_cL',0,'pro_cD',0);
+    
+    coder.varsize('op_pts.wsp','op_pts.pitch','op_pts.rpm');
+    coder.varsize('Blade.r','Blade.C','Blade.t_C','Blade.AeroTwist','Blade.preflap','Blade.pro_t_C','Blade.pro_AoA','Blade.pro_cL','Blade.pro_cD');
+        
     for i=1:length(header_titles)
         switch header_titles{i}
             case 'GENERAL'
-                General.N = str2double(extractBefore((filebyline(header_row_ids(i)+1)),';'));
-                General.rho = str2double(extractBefore((filebyline(header_row_ids(i)+2)),';'));
-                General.induction = str2double(extractBefore((filebyline(header_row_ids(i)+3)),';'));
-                General.tip_loss = str2double(extractBefore((filebyline(header_row_ids(i)+4)),';'));
-                General.highCT = str2double(extractBefore((filebyline(header_row_ids(i)+5)),';'));
+                General.N = real(str2double(extractBefore((filebyline{header_row_ids(i)+1}),';')));
+                General.rho = real(str2double(extractBefore((filebyline{header_row_ids(i)+2}),';')));
+                General.induction = real(str2double(extractBefore((filebyline{header_row_ids(i)+3}),';')));
+                General.tip_loss = real(str2double(extractBefore((filebyline{header_row_ids(i)+4}),';')));
+                General.highCT = real(str2double(extractBefore((filebyline{header_row_ids(i)+5}),';')));
             case 'OPERATIONAL_SET-POINTS'
                 headers = split_string(filebyline{header_row_ids(i)+1},' ');
                 data = zeros(header_row_ids(i+1)-header_row_ids(i)-3,length(headers));
                 for j=1:header_row_ids(i+1)-header_row_ids(i)-3
                     tline = split_string(filebyline{header_row_ids(i)+j-1+2},' ');
-                    data(j,1:length(headers)) = str2double(tline(1:length(headers)));
+                    for k=1:length(headers)
+                        data(j,k) = real(str2double(tline{k}));
+                    end
                 end
-                for k=1:length(headers)
-                    op_pts.(headers{k})=data(:,k);
-                end
+                op_pts.wsp=data(:,1);
+                op_pts.pitch = data(:,2);
+                op_pts.rpm = data(:,3);
             case 'BLADE_DETAILS'
                 headers = split_string(filebyline{header_row_ids(i)+1},' ');
                 data_bld = zeros(header_row_ids(i+1)-header_row_ids(i)-3,length(headers));
                 for j=1:header_row_ids(i+1)-header_row_ids(i)-3
                     tline = split_string(filebyline{header_row_ids(i)+j-1+2},' ');
-                    data_bld(j,1:length(headers)) = str2double(tline(1:length(headers)));
+                    for k=1:length(headers)
+                        data_bld(j,k) = real(str2double(tline{k}));
+                    end
                 end
-                for k=1:length(headers)
-                    Blade.(headers{k})=data_bld(:,k);
-                end
+                Blade.r=data_bld(:,1);
+                Blade.C=data_bld(:,2);
+                Blade.t_C=data_bld(:,3);
+                Blade.AeroTwist=data_bld(:,4);
             case 'AEROFOIL_FILE'
                 aerofoil_file = strtrim(filebyline{header_row_ids(i)+1});
                 [Blade.pro_t_C, Blade.pro_AoA, Blade.pro_cL, Blade.pro_cD] = read_pc_file(aerofoil_file);
         end
     end
 end
-
