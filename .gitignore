@@ -7,3 +7,7 @@ Temp/
 
 # Ignore output in any folders
 */output.txt
+
+# Ignore MATLAB codegen folders
+*/codegen
+
