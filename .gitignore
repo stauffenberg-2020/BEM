@@ -4,3 +4,14 @@
 
 # Ignore temporary folders
 Temp/
+
+# Ignore output in any folders
+*/output.txt
+
+# Ignore MATLAB codegen folders
+*/codegen
+
+# Ignore Binaries
+*.exe
+*.mexw64
+
