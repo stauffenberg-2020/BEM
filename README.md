@@ -1,2 +1,2 @@
 # BEM
-Blade Element Theory for Wind Turbines
+Steady State Blade Element Theory for Wind Turbine Rotors
