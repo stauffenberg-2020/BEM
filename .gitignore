@@ -11,3 +11,7 @@ Temp/
 # Ignore MATLAB codegen folders
 */codegen
 
+# Ignore Binaries
+*.exe
+*.mexw64
+
