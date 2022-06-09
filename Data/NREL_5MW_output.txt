@@ -1,4 +1,4 @@
-Flap_For 	Edge_For 	Flap_Mom 	Edge_Mom 	Aero_ Tor 	Aero_Pow 	Rotor_Cp 	Aero_Thr 	Rotor_Ct 	
+Flap_For 	Edge_For 	Flap_Mom 	Edge_Mom 	Aero_Tor 	Aero_Pow 	Rotor_Cp 	Aero_Thr 	Rotor_Ct 	
 [kN] 		[kN] 		[kNm] 		[kNm] 		[kNm] 		[kW] 		[-] 		[kN] 		[-] 		
    63.25 	    0.11 	 2331.17 	   20.93 	   63.26 	   45.71 	    0.10 	  189.76 	    1.63 	
    77.19 	    1.77 	 2921.69 	  100.19 	  307.82 	  222.42 	    0.24 	  231.58 	    1.27 	

@@ -104,7 +104,7 @@
     
     %% Output calculations
     output_details = {'Fy11h', 'Fx11h', '-Mx11h', 'My11h', 'Maero', 'P_rot', 'Cp', 'Fthr', 'Ct';
-                            'Flap_For', 'Edge_For', 'Flap_Mom', 'Edge_Mom', 'Aero_ Tor', 'Aero_Pow', 'Rotor_Cp','Aero_Thr','Rotor_Ct';
+                            'Flap_For', 'Edge_For', 'Flap_Mom', 'Edge_Mom', 'Aero_Tor', 'Aero_Pow', 'Rotor_Cp','Aero_Thr','Rotor_Ct';
                             '[kN]','[kN]','[kNm]','[kNm]','[kNm]','[kW]','[-]','[kN]','[-]'};
     
     output=zeros(length(wsp),length(output_details));
