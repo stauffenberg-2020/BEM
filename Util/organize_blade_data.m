@@ -13,18 +13,16 @@ function Blade = organize_blade_data(sec_r, sec_C, sec_t_C, sec_twist, pc)
     % profile_cD is L x K cD values corresponding to each angles of attack and t_C
     
     % Input data organising, Making sure values are in column vector
-    sec_r = sec_r(:);
-    sec_C = sec_C(:);
-    sec_t_C = sec_t_C(:);
-    sec_twist = sec_twist(:);
-    
-    ae = readmatrix('G:\BEM\BEM\Data\NREL5MWRefTurb_v50\data\NREL_5MW_ae.txt');
+    r = sec_r(:);
+    C = sec_C(:);
+    t_C = sec_t_C(:);
+    AeroTwist = sec_twist(:);
     
     % Organizing the blade data in a structure
-    Blade.sec_r = sec_r;
-    Blade.sec_C = sec_C;
-    Blade.sec_t_C = sec_t_C;
-    Blade.sec_twist = sec_twist;
+    Blade.r = r;
+    Blade.C = C;
+    Blade.t_C = t_C;
+    Blade.AeroTwist = AeroTwist;
     Blade.preflap = zeros(length(sec_r),1);
     
     [Blade.pro_t_C, Blade.pro_AoA, Blade.pro_cL, Blade.pro_cD] = read_pc_file(pc);

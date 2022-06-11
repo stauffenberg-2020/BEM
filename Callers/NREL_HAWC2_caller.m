@@ -1,7 +1,7 @@
 % Caller script
 clearvars;clc;
-N=3;
-rho = 1.225;
+General.N=3;
+General.rho = 1.225;
 
 op_data = readmatrix('G:\BEM\BEM\Data\NREL5MWRefTurb_v50\data\operational_data.opt','FileType','text');
 ae = readmatrix('G:\BEM\BEM\Data\NREL5MWRefTurb_v50\data\NREL_5MW_ae.txt');
@@ -19,13 +19,19 @@ sec_twist = [-13.3,-13.3,-13.3,-13.3,-11.48,-10.16,-9.011,-7.795,-6.544,-5.361,-
 
 BLD = organize_blade_data(sec_r, sec_C, sec_t_C, sec_twist, pc);
 
-AeroFlags.induction = 1; % 0 or 1, 0 = Induction Off, 1 = Induction On
-AeroFlags.tip_loss = 1; % 0 or 1, 0 = Prandtl's tip loss correction Off, 1 = Prandtl's tip loss correction On
-AeroFlags.highCT = 2; % 0 or 1 or 2, 0 = Off, 1 = As per HANSEN eqn. 6.38, 2 = As per HANSEN eqn. 6.37
+General.induction = 1; % 0 or 1, 0 = Induction Off, 1 = Induction On
+General.tip_loss = 1; % 0 or 1, 0 = Prandtl's tip loss correction Off, 1 = Prandtl's tip loss correction On
+General.highCT = 2; % 0 or 1 or 2, 0 = Off, 1 = As per HANSEN eqn. 6.38, 2 = As per HANSEN eqn. 6.37
 
-[output_details,output,BEM] = core_bem(rho, N, op_pts, BLD, AeroFlags);
-% [output_details,output,BEM] = core_bem(rho, N, wsp(1), pitch(1), rpm(1), sec_r, sec_C, sec_t_C, sec_twist, profile_t_C, profile_AoA, profile_cL, profile_cD , induction_flag, tip_loss_flag, glauert_corr_flag);
+[output_details,output,BEM] = core_bem(General, op_pts, BLD);
 
 
 %% Plotting & Comparisons
+figure()
+plot(op_pts.wsp,output(:,5))
+hold on
+plot(op_pts.wsp,op_data(:,4))
+grid on
+xlabel('Wind Speed (m/s)')
+ylabel('Aerodynamic Power (kW)')
 

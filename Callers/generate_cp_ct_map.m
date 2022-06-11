@@ -2,8 +2,8 @@
 
 % Caller script
 clearvars;clc;
-N=3;
-rho = 1.225;
+General.N=3;
+General.rho = 1.225;
 
 ae = readmatrix('G:\BEM\BEM\Data\NREL5MWRefTurb_v50\data\NREL_5MW_ae.txt');
 pc = 'G:\BEM\BEM\Data\NREL5MWRefTurb_v50\data\NREL_5MW_pc.txt';
@@ -15,29 +15,49 @@ sec_twist = [-13.3,-13.3,-13.3,-13.3,-11.48,-10.16,-9.011,-7.795,-6.544,-5.361,-
 
 BLD = organize_blade_data(sec_r, sec_C, sec_t_C, sec_twist, pc);
 
-AeroFlags.induction = 1; % 0 or 1, 0 = Induction Off, 1 = Induction On
-AeroFlags.tip_loss = 1; % 0 or 1, 0 = Prandtl's tip loss correction Off, 1 = Prandtl's tip loss correction On
-AeroFlags.highCT = 2; % 0 or 1 or 2, 0 = Off, 1 = As per HANSEN eqn. 6.38, 2 = As per HANSEN eqn. 6.37
+General.induction = 1; % 0 or 1, 0 = Induction Off, 1 = Induction On
+General.tip_loss = 1; % 0 or 1, 0 = Prandtl's tip loss correction Off, 1 = Prandtl's tip loss correction On
+General.highCT = 2; % 0 or 1 or 2, 0 = Off, 1 = As per HANSEN eqn. 6.38, 2 = As per HANSEN eqn. 6.37
 
+lambda = 5:0.5:10;
 op_pts.pitch = (-5:0.5:14)';
-op_pts.wsp = (3:0.5:18)';
-lambda = 18:-0.5:3;
 
-op_pts.rpm = (lambda'.*op_pts.wsp/sec_r(end)).*(30/pi);
+op_pts.wsp = (3:2:18)';
+map_pts.wsp = op_pts.wsp;
+% for i=1:length(op_pts.pitch)
+%     map_pts.pitch(1:length(op_pts.wsp),1) = op_pts.pitch(i);
+%     for j=1:length(lambda)
+%         map_pts.rpm = (lambda(j).*map_pts.wsp/sec_r(end)).*(30/pi);
+%         
+%         [~, output, ~] = core_bem(General, map_pts, BLD);
+%         Cp(i,j) = max(output(:,7)); % The values are anyways same for a Lambda
+%         Ct(i,j) = max(output(:,9));
+%     end
+% end
 
 for i=1:length(op_pts.pitch)
-    map_pts.pitch(1:length(lambda),1) = op_pts.pitch(i);
-    map_pts.wsp = op_pts.wsp;
-    map_pts.rpm = op_pts.rpm;
-    [~, output, ~] = core_bem(rho, N, map_pts, BLD , AeroFlags);
-    Ct(:,i) = output(:,9);
-    Cp(:,i) = output(:,7);
-    
+    map_pts.pitch(1:length(op_pts.wsp),1) = op_pts.pitch(i);
+    for j=1:length(lambda)
+        map_pts.rpm = (lambda(j).*map_pts.wsp/sec_r(end)).*(30/pi);
+        
+        [~, output, ~] = core_bem(General, map_pts, BLD);
+        Cp(i,j) = max(output(:,7)); % The values are anyways same for a Lambda
+        Ct(i,j) = max(output(:,9));
+    end
 end
 
 %% Plotting
 
 close all;
+figure()
+
+contourf(op_pts.pitch,lambda,Cp','ShowText','on')
+xlabel('Pitch (deg)');
+ylabel('Lambda (TSR)');
+hcb = colorbar;
+hcb.Title.String = 'Cp';
+
+%%
 figure()
 for i=1:4:length(op_pts.pitch)
     plot(lambda,Cp(:,i),'DisplayName',num2str(op_pts.pitch(i)))
@@ -69,7 +89,7 @@ function [CM,cc] = plotCpVsLambda(inp_x,inp_z,inp_y)
     [CM, cc] = contour(X,Z,Y,inp_z,'ShowText','on');
     ylim([0 0.593]);
     grid on
-    xlabel('Lambda')
+    xlabel('Lambda (TSR)')
     ylabel('Cp')
     hcb = colorbar;
     hcb.Title.String = 'Pitch (deg)';
