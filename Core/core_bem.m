@@ -75,6 +75,9 @@
                         BEM.aA_new(i,j) = 1./((4.*BEM.F(i,j).*sind(BEM.phi(i,j)).*sind(BEM.phi(i,j))./(BEM.sig(i).*BEM.CN(i,j)))+1); % Calculating new axial induction factors
                     end
                     BEM.aT_new(i,j) = 1./((4.*BEM.F(i,j).*sind(BEM.phi(i,j)).*cosd(BEM.phi(i,j))./(BEM.sig(i).*BEM.CT(i,j)))-1); % Calculating new axial induction factors
+                    RF=0.50; % Relaxation Factor as per https://onlinelibrary.wiley.com/doi/full/10.1002/ese3.945
+                    BEM.aA_new(i,j) = RF*BEM.aA_new(i,j)+(1-RF)*BEM.aA(i,j);
+                    BEM.aT_new(i,j) = RF*BEM.aT_new(i,j)+(1-RF)*BEM.aT(i,j);
                     iter=iter+1;
                 end
                 BEM.iter_count(i,j)=iter; % Induction iteration counter
