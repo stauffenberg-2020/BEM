@@ -103,7 +103,7 @@
     BEM.Ct = BEM.dT./(repmat(Q_G,length(BEM.r),1).*2.*pi.*repmat(BEM.r,1,length(wsp))); % Local Thrust Coefficient from local Thrust
     
     %% Output calculations
-    output_details = {'Fy11h', 'Fx11h', '-Mx11h', 'My11h', 'Maero', 'P_rot', 'Cp', 'Fthr', 'Ct';
+    output_details = {'Flp_F', 'Edg_F', 'Flp_M', 'Edg_M', 'M_aer', 'P_rot', 'Cp', 'Fthr', 'Ct';
                             'Flap_For', 'Edge_For', 'Flap_Mom', 'Edge_Mom', 'Aero_Tor', 'Aero_Pow', 'Rotor_Cp','Aero_Thr','Rotor_Ct';
                             '[kN]','[kN]','[kNm]','[kNm]','[kNm]','[kW]','[-]','[kN]','[-]'};
     
