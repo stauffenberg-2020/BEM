@@ -1,6 +1,5 @@
 % Script for generating Cp (and Ct) map
 
-% Caller script
 clearvars;close all;clc;
 
 ae = '.\Data\NREL5MWRefTurb_v50\data\NREL_5MW_ae.txt'; % ae data file
@@ -36,55 +35,19 @@ end
 %
 path = '.\Data\';
 write_Cp_Ct(lambda,pitch,Cp,Ct,path);
-%% Plotting
+%% Plotting Cp & Ct
 
-close all;
 MP = get(0,'MonitorPositions');
 if size(MP,1) == 1
     SS = MP(1,:);
 else
     SS = MP(2,:); % To have the results better displayed in bigger screen
 end
-figure('position',[SS(1)+SS(3)*0.05, SS(2)+SS(4)*0.2, SS(3)*0.9, SS(4)*0.6])
-
+figure('position',[SS(1)+SS(3)*0.05, SS(2)+SS(4)*0.2, SS(3)*0.9, SS(4)*0.6]);
 subplot(1,2,1)
-[C,h] = contourf(lambda',pitch,Cp,500,'LineStyle','--');
-hold on
-xlabel('Lambda (TSR)');
-ylabel('Pitch (deg)');
-
-Lvls = h.LevelList;
-h.LevelList = Lvls(Lvls >= 0); 
-h.LevelList = round(h.LevelList,3);
-clabel(C,h);
-
-[x,y]=find(ismember(Cp,max(Cp(:))));
-plot(lambda(y),pitch(x),'r-p')
-txt = sprintf('  Cp_m_a_x = %0.3f',max(Cp(:)));
-text(lambda(y),pitch(x),txt,'Color','red');
-line([lambda(1),lambda(y)],[pitch(x),pitch(x)],'Color','red','LineStyle','--')
-line([lambda(y),lambda(y)],[pitch(1),pitch(x)],'Color','red','LineStyle','--')
-hcb = colorbar;
-hcb.Title.String = 'Cp';
-
-for i=1:length(lambda)
-    [~,I(i)] = max(Cp(:,i));
-end
-plot(lambda,pitch(I),'.-r','LineWidth',0.5);
-
+[C,h] = plotPitchVsLambda(pitch, lambda, Cp);
 subplot(1,2,2)
-idx_to_plot = unique([flip(x:-8:1) x:6:length(pitch)]); % Making sure max Cp is plotted
-j=1;
-for i=[idx_to_plot]
-    [max_Cp(j),idx(j)] = max(Cp(i,:));
-    j=j+1;
-end
-[CM,cc] = plotCpVsLambda(lambda,pitch(idx_to_plot)',(Cp(idx_to_plot,:))');
-hold on
-ids_to_plot = reduce(max_Cp);
-plot(lambda(idx(ids_to_plot)),max_Cp(ids_to_plot),'.-r','HandleVisibility','off');
-plot(lambda(y),max(Cp(:)),'r-p')
-text(lambda(y),max(Cp(:)),txt,'Color','red');
+[CM,cc] = plotCpVsLambda(pitch, lambda, Cp);
 
 %% Upscaling the CP and CT data for better plotting purposes
 [lambda_up, pitch_up, Cp_up, Ct_up] = upscale(lambda, pitch, Cp, Ct, 200, 500);
@@ -95,6 +58,12 @@ Cp_up = Cp_up.*flag;
 Ct_up = Ct_up.*flag;
 
 %% Cp and Ct plot
+MP = get(0,'MonitorPositions');
+if size(MP,1) == 1
+    SS = MP(1,:);
+else
+    SS = MP(2,:); % To have the results better displayed in bigger screen
+end
 figure('position',[SS(1)+SS(3)*0.05, SS(2)+SS(4)*0.2, SS(3)*0.9, SS(4)*0.6])
 subplot(1,2,1)
 levels = unique([flip(min(Cp_up(:)):0.001:0.01) 0.01:0.05:max(Cp_up(:))]); % Manually selecting levels for better plotting
@@ -146,36 +115,6 @@ title('Ct map (corresponding to Cp map)');
 
 
 %% Supporting functions 
-function [CM,cc] = plotCpVsLambda(inp_x,inp_z,inp_y)
-    
-    % inp_x: 1xM-vector with x-coordinates
-    % inp_z: 1xN-vector with z-coordinates (the 'text-Info')
-    % inp_y: MxN-matrix with datapoints
-
-    [X,Y]=meshgrid(inp_x,inp_z);
-    [X_inp,Y_inp]=meshgrid(inp_x,inp_z);
-    Z=interp2(X_inp,Y_inp,inp_y',X,Y);
-    [CM, cc] = contour(X,Z,Y,inp_z,'ShowText','on');
-    ylim([0 0.593]);
-    grid on
-    xlabel('Lambda (TSR)')
-    ylabel('Cp')
-    hcb = colorbar;
-    hcb.Title.String = 'Pitch (deg)';
-end
-
-function plot_ids = reduce(Cp)
-    Cp_red = Cp;
-    X = Cp(length(Cp));
-    for k = length(Cp)-1:-1:1
-      if Cp(k) < X
-        Cp_red(k) = X;  % Or: NaN
-      else
-        X = Cp(k);
-      end
-    end
-    plot_ids = (Cp_red == Cp);
-end
 
 function write_Cp_Ct(lambda,pitch,Cp,Ct,path)
     % Writing the outputs into a text file
@@ -194,8 +133,8 @@ function write_Cp_Ct(lambda,pitch,Cp,Ct,path)
                     fprintf(fileID1,'            \t');
                     fprintf(fileID2,'            \t');
                 else
-                    fprintf(fileID1,'%8.3f \t',lambda(j-1));
-                    fprintf(fileID2,'%8.3f \t',lambda(j-1));
+                    fprintf(fileID1,'%8.4f \t',lambda(j-1));
+                    fprintf(fileID2,'%8.4f \t',lambda(j-1));
                 end
                 if j==(length(lambda)+1)
                     fprintf(fileID1,'\n');
@@ -208,8 +147,8 @@ function write_Cp_Ct(lambda,pitch,Cp,Ct,path)
                     fprintf(fileID1,'%8.3f \t',pitch(i-1));
                     fprintf(fileID2,'%8.3f \t',pitch(i-1));
                 else
-                    fprintf(fileID1,'%8.3f \t',Cp(i-1,j-1));
-                    fprintf(fileID2,'%8.3f \t',Ct(i-1,j-1));
+                    fprintf(fileID1,'%8.4f \t',Cp(i-1,j-1));
+                    fprintf(fileID2,'%8.4f \t',Ct(i-1,j-1));
                 end
                 if j==(length(lambda)+1)
                     fprintf(fileID1,'\n');
