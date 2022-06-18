@@ -52,7 +52,18 @@ r	C	t_C	AeroTwist
 61.500	0.961	17	0.000
 
 # AEROFOIL_FILE
-G:\BEM\BEM\Data\NREL5MWRefTurb_v50\data\NREL_5MW_pc.txt
+.\Data\NREL5MWRefTurb_v50\data\NREL_5MW_pc.txt
+
+# CONTROL
+.\Data\Cp_data.txt; % Path to Cp matrix
+.\Data\Ct_data.txt; % Path to Ct matrix
+5000; % Power rating in kW
+3; % Cut-in wind speed
+11.4; Rated wind speed
+25; % Cut-out wind speed
+6.9; Cut-in rotor rpm
+12.1; Rated rotor rpm
+
 
 
 

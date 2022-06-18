@@ -7,10 +7,10 @@ General.induction = 1; % 0 or 1, 0 = Induction Off, 1 = Induction On
 General.tip_loss = 1; % 0 or 1, 0 = Prandtl's tip loss correction Off, 1 = Prandtl's tip loss correction On
 General.highCT = 1; % 0 or 1 or 2, 0 = Off, 1 = As per HANSEN eqn. 6.38, 2 = As per HANSEN eqn. 6.37
 
-op_data = readmatrix('G:\BEM\BEM\Data\NREL5MWRefTurb_v50\data\operational_data.opt','FileType','text');
-ae = 'G:\BEM\BEM\Data\NREL5MWRefTurb_v50\data\NREL_5MW_ae.txt'; % ae data file
-htc = 'G:\BEM\BEM\Data\NREL5MWRefTurb_v50\htc\NREL_5MW_reference_wind_turbine.htc'; % htc file
-pc = 'G:\BEM\BEM\Data\NREL5MWRefTurb_v50\data\NREL_5MW_pc.txt'; % Aerofoil data file
+op_data = readmatrix('.\Data\NREL5MWRefTurb_v50\data\operational_data.opt','FileType','text');
+ae = '.\Data\NREL5MWRefTurb_v50\data\NREL_5MW_ae.txt'; % ae data file
+htc = '.\Data\NREL5MWRefTurb_v50\htc\NREL_5MW_reference_wind_turbine.htc'; % htc file
+pc = '.\Data\NREL5MWRefTurb_v50\data\NREL_5MW_pc.txt'; % Aerofoil data file
 
 op_pts.wsp = op_data(:,1);
 op_pts.pitch = op_data(:,2);

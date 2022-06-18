@@ -1,6 +1,6 @@
 function write_output(output_details, output, file)
     %% Writing the outputs into a text file
-    tmp = extractBefore(file,'.');
+    tmp = extractBefore(file,'.txt');
     outfile = plus(tmp,"_output.txt");
     fileID = fopen(outfile,'w');
     for j=1:size(output,2)
