@@ -18,23 +18,24 @@ General.induction = 1; % 0 or 1, 0 = Induction Off, 1 = Induction On
 General.tip_loss = 1; % 0 or 1, 0 = Prandtl's tip loss correction Off, 1 = Prandtl's tip loss correction On
 General.highCT = 2; % 0 or 1 or 2, 0 = Off, 1 = As per HANSEN eqn. 6.38, 2 = As per HANSEN eqn. 6.37
 
-lambda = 2:1:20; % Lambda (TSR) range
-op_pts.pitch = (-5:0.5:25)'; % Pitch range
+lambda = unique([2:0.2:3.8 4.25:0.25:6.75 7.5:0.5:8 8:1:20]); % Lambda (TSR) range, 2:1:20
+pitch = unique([-5:0.25:5 5:0.5:10 10:1:25])'; % Pitch range, -5:0.5:25
+
 wsp = 8; % Just a temp variable for deriving rpm corresponding to lambda
 
-Cp = zeros(length(op_pts.pitch),length(lambda));
-Ct = zeros(length(op_pts.pitch),length(lambda));
-for i=1:length(op_pts.pitch)
-    map_pts.wsp(1:length(lambda),1) = wsp;
-    map_pts.pitch(1:length(lambda),1) = op_pts.pitch(i);
-    map_pts.rpm = (lambda'*wsp/BLD.r(end)).*(30/pi);
-    [~, output, ~] = core_bem(General, map_pts, BLD);
+Cp = zeros(length(pitch),length(lambda));
+Ct = zeros(length(pitch),length(lambda));
+for i=1:length(pitch)
+    op_pts.wsp(1:length(lambda),1) = wsp;
+    op_pts.pitch(1:length(lambda),1) = pitch(i);
+    op_pts.rpm = (lambda'*wsp/BLD.r(end)).*(30/pi);
+    [~, output, ~] = core_bem(General, op_pts, BLD);
     Cp(i,:) = output(:,7);
     Ct(i,:) = output(:,9);
 end
-%%
+%
 path = '.\Data\';
-write_cp_ct(lambda,op_pts.pitch,Cp,Ct,path);
+write_Cp_Ct(lambda,pitch,Cp,Ct,path);
 %% Plotting
 
 close all;
@@ -47,7 +48,7 @@ end
 figure('position',[SS(1)+SS(3)*0.05, SS(2)+SS(4)*0.2, SS(3)*0.9, SS(4)*0.6])
 
 subplot(1,2,1)
-[C,h] = contourf(lambda',op_pts.pitch,Cp,500,'LineStyle','--');
+[C,h] = contourf(lambda',pitch,Cp,500,'LineStyle','--');
 hold on
 xlabel('Lambda (TSR)');
 ylabel('Pitch (deg)');
@@ -58,32 +59,91 @@ h.LevelList = round(h.LevelList,3);
 clabel(C,h);
 
 [x,y]=find(ismember(Cp,max(Cp(:))));
-plot(lambda(y),op_pts.pitch(x),'r-p')
+plot(lambda(y),pitch(x),'r-p')
 txt = sprintf('  Cp_m_a_x = %0.3f',max(Cp(:)));
-text(lambda(y),op_pts.pitch(x),txt,'Color','red');
-line([lambda(1),lambda(y)],[op_pts.pitch(x),op_pts.pitch(x)],'Color','red','LineStyle','--')
-line([lambda(y),lambda(y)],[op_pts.pitch(1),op_pts.pitch(x)],'Color','red','LineStyle','--')
+text(lambda(y),pitch(x),txt,'Color','red');
+line([lambda(1),lambda(y)],[pitch(x),pitch(x)],'Color','red','LineStyle','--')
+line([lambda(y),lambda(y)],[pitch(1),pitch(x)],'Color','red','LineStyle','--')
 hcb = colorbar;
 hcb.Title.String = 'Cp';
 
 for i=1:length(lambda)
-    [M(i),I(i)] = max(Cp(:,i));
+    [~,I(i)] = max(Cp(:,i));
 end
-plot(lambda,op_pts.pitch(I),'.-r','LineWidth',0.5);
+plot(lambda,pitch(I),'.-r','LineWidth',0.5);
 
 subplot(1,2,2)
-idx_to_plot = unique([flip(x:-4:1) x:4:length(op_pts.pitch)]); % Making sure max Cp is plotted
+idx_to_plot = unique([flip(x:-8:1) x:6:length(pitch)]); % Making sure max Cp is plotted
 j=1;
 for i=[idx_to_plot]
     [max_Cp(j),idx(j)] = max(Cp(i,:));
     j=j+1;
 end
-[CM,cc] = plotCpVsLambda(lambda,op_pts.pitch(idx_to_plot)',(Cp(idx_to_plot,:))');
+[CM,cc] = plotCpVsLambda(lambda,pitch(idx_to_plot)',(Cp(idx_to_plot,:))');
 hold on
 ids_to_plot = reduce(max_Cp);
 plot(lambda(idx(ids_to_plot)),max_Cp(ids_to_plot),'.-r','HandleVisibility','off');
 plot(lambda(y),max(Cp(:)),'r-p')
 text(lambda(y),max(Cp(:)),txt,'Color','red');
+
+%% Upscaling the CP and CT data for better plotting purposes
+[lambda_up, pitch_up, Cp_up, Ct_up] = upscale(lambda, pitch, Cp, Ct, 200, 500);
+
+positive_Cp_data = max(min(Cp_up, 0.593), 0);
+flag = ceil(positive_Cp_data);
+Cp_up = Cp_up.*flag;
+Ct_up = Ct_up.*flag;
+
+%% Cp and Ct plot
+figure('position',[SS(1)+SS(3)*0.05, SS(2)+SS(4)*0.2, SS(3)*0.9, SS(4)*0.6])
+subplot(1,2,1)
+levels = unique([flip(min(Cp_up(:)):0.001:0.01) 0.01:0.05:max(Cp_up(:))]); % Manually selecting levels for better plotting
+[C2,h2] = contourf(lambda_up', pitch_up, Cp_up, levels,'LineStyle','--');
+hold on
+xlabel('Lambda (TSR)');
+ylabel('Pitch (deg)');
+title('Cp map');
+
+Lvls2 = h2.LevelList;
+h2.LevelList = Lvls2(Lvls2 > 0); 
+h2.LevelList = round(h2.LevelList,3);
+v2 = unique([Lvls2(1) Lvls2(11:end)]); % Manually selecting levels for labeling
+clabel(C2,h2,v2);
+
+[x,y]=find(ismember(Cp_up,max(Cp_up(:))));
+plot(lambda_up(y),pitch_up(x),'r-p')
+txt = sprintf('  Cp_m_a_x = %0.3f',max(Cp_up(:)));
+text(lambda_up(y),pitch_up(x),txt,'Color','red');
+line([lambda_up(1),lambda_up(y)],[pitch_up(x),pitch_up(x)],'Color','red','LineStyle','--')
+line([lambda_up(y),lambda_up(y)],[pitch_up(1),pitch_up(x)],'Color','red','LineStyle','--')
+hcb2 = colorbar;
+hcb2.Title.String = 'Cp';
+
+for j=1:length(lambda_up)
+    if max(Cp_up(:,j)) == 0
+        I_up(j) = I_up(j-1);
+    else
+        [~,I_up(j)] = max(Cp_up(:,j));
+    end
+end
+plot(lambda_up,pitch_up(I_up),'-r','LineWidth',0.5);
+
+
+subplot(1,2,2)
+levels = unique([flip(min(Ct_up(:)):0.02:0.1) 0.2:0.2:max(Ct_up(:))]); % Manually selecting levels for better plotting
+[C3,h3] = contourf(lambda_up', pitch_up, Ct_up, levels,'LineStyle','--');
+hold on
+Lvls3 = h3.LevelList;
+h3.LevelList = Lvls3(Lvls3 > 0); 
+h3.LevelList = round(h3.LevelList,2);
+v3 = unique([Lvls3(1) Lvls3(6:end)]); % Manually selecting levels for labeling
+clabel(C3,h3,v3);
+hcb3 = colorbar;
+hcb3.Title.String = 'Ct';
+xlabel('Lambda (TSR)');
+ylabel('Pitch (deg)');
+title('Ct map (corresponding to Cp map)');
+
 
 %% Supporting functions 
 function [CM,cc] = plotCpVsLambda(inp_x,inp_z,inp_y)
@@ -117,8 +177,8 @@ function plot_ids = reduce(Cp)
     plot_ids = (Cp_red == Cp);
 end
 
-function write_cp_ct(lambda,pitch,Cp,Ct,path)
-    %% Writing the outputs into a text file
+function write_Cp_Ct(lambda,pitch,Cp,Ct,path)
+    % Writing the outputs into a text file
     cp_file = plus(path,"Cp_data.txt");
     ct_file = plus(path,"Ct_data.txt");
     fileID1 = fopen(cp_file,'w');
@@ -161,4 +221,11 @@ function write_cp_ct(lambda,pitch,Cp,Ct,path)
     end
     fclose(fileID1);
     fclose(fileID2);
+end
+
+function [lambda_new, pitch_new, Cp_new, Ct_new] = upscale(lambda, pitch, Cp, Ct, n1, n2)
+    lambda_new = linspace(min(lambda),max(lambda),n1);
+    pitch_new = linspace(min(pitch),max(pitch),n2)';
+    Cp_new = interp2(pitch, lambda, Cp', pitch_new, lambda_new)';
+    Ct_new = interp2(pitch, lambda, Ct', pitch_new, lambda_new)';
 end
