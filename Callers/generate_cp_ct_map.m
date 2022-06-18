@@ -3,9 +3,9 @@
 % Caller script
 clearvars;close all;clc;
 
-ae = 'G:\BEM\BEM\Data\NREL5MWRefTurb_v50\data\NREL_5MW_ae.txt'; % ae data file
-htc = 'G:\BEM\BEM\Data\NREL5MWRefTurb_v50\htc\NREL_5MW_reference_wind_turbine.htc'; % htc file
-pc = 'G:\BEM\BEM\Data\NREL5MWRefTurb_v50\data\NREL_5MW_pc.txt'; % Aerofoil data file
+ae = '.\Data\NREL5MWRefTurb_v50\data\NREL_5MW_ae.txt'; % ae data file
+htc = '.\Data\NREL5MWRefTurb_v50\htc\NREL_5MW_reference_wind_turbine.htc'; % htc file
+pc = '.\Data\NREL5MWRefTurb_v50\data\NREL_5MW_pc.txt'; % Aerofoil data file
 
 [BLD.r, BLD.C, BLD.t_C, nsec] = read_ae_file(ae);
 [BLD.AeroTwist] = read_aero_twist(htc, nsec);
@@ -33,7 +33,7 @@ for i=1:length(op_pts.pitch)
     Ct(i,:) = output(:,9);
 end
 %%
-path = 'G:\BEM\BEM\Data\';
+path = '.\Data\';
 write_cp_ct(lambda,op_pts.pitch,Cp,Ct,path);
 %% Plotting
 
@@ -57,7 +57,7 @@ h.LevelList = Lvls(Lvls >= 0);
 h.LevelList = round(h.LevelList,3);
 clabel(C,h);
 
-[x,y] = max_mat(Cp);
+[x,y]=find(ismember(Cp,max(Cp(:))));
 plot(lambda(y),op_pts.pitch(x),'r-p')
 txt = sprintf('  Cp_m_a_x = %0.3f',max(Cp(:)));
 text(lambda(y),op_pts.pitch(x),txt,'Color','red');
@@ -104,22 +104,6 @@ function [CM,cc] = plotCpVsLambda(inp_x,inp_z,inp_y)
     hcb.Title.String = 'Pitch (deg)';
 end
 
-function [a,b] = max_mat(c)
-as=size(c);
-total_ele=numel(c);
-[~,I]=max(c(:));
-r=rem(I,as(1));
-a=r;
-b=((I-a)/as(1))+1;
-    if a==0
-        a=as(1);
-        b=b-1;
-    else
-        a=r;
-        b=b;
-    end
-end
-
 function plot_ids = reduce(Cp)
     Cp_red = Cp;
     X = Cp(length(Cp));
@@ -135,36 +119,46 @@ end
 
 function write_cp_ct(lambda,pitch,Cp,Ct,path)
     %% Writing the outputs into a text file
-    outfile = plus(path,"Cp_data.txt");
-    fileID = fopen(outfile,'w');
+    cp_file = plus(path,"Cp_data.txt");
+    ct_file = plus(path,"Ct_data.txt");
+    fileID1 = fopen(cp_file,'w');
+    fileID2 = fopen(ct_file,'w');
     
-    fprintf(fileID,'%d \t %d\n',length(pitch),length(lambda));
+    fprintf(fileID1,'%d \t %d\n',length(pitch),length(lambda));
+    fprintf(fileID2,'%d \t %d\n',length(pitch),length(lambda));
     
     for i=1:length(pitch)+1
         if i==1
             for j=1:length(lambda)+1
                 if j==1
-                    fprintf(fileID,'            \t');
+                    fprintf(fileID1,'            \t');
+                    fprintf(fileID2,'            \t');
                 else
-                    fprintf(fileID,'%8.3f \t',lambda(j-1));
+                    fprintf(fileID1,'%8.3f \t',lambda(j-1));
+                    fprintf(fileID2,'%8.3f \t',lambda(j-1));
                 end
                 if j==(length(lambda)+1)
-                    fprintf(fileID,'\n');
+                    fprintf(fileID1,'\n');
+                    fprintf(fileID2,'\n');
                 end
             end
         else
             for j=1:length(lambda)+1
                 if j==1
-                    fprintf(fileID,'%8.3f \t',pitch(i-1));
+                    fprintf(fileID1,'%8.3f \t',pitch(i-1));
+                    fprintf(fileID2,'%8.3f \t',pitch(i-1));
                 else
-                    fprintf(fileID,'%8.3f \t',Cp(i-1,j-1));
+                    fprintf(fileID1,'%8.3f \t',Cp(i-1,j-1));
+                    fprintf(fileID2,'%8.3f \t',Ct(i-1,j-1));
                 end
                 if j==(length(lambda)+1)
-                    fprintf(fileID,'\n');
+                    fprintf(fileID1,'\n');
+                    fprintf(fileID2,'\n');
                 end
             end
         end
         
     end
-    fclose(fileID);
+    fclose(fileID1);
+    fclose(fileID2);
 end
