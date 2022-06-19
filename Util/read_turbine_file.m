@@ -34,7 +34,7 @@ function [General, op_pts, Blade, Control] = read_turbine_file(file)
     % Pre-initilization of structures for MATLAB Coder compatibility
     General = struct('N',0,'rho',0,'induction',0,'tip_loss',0,'highCT',0);
     coder.cstructname(General,'General');
-    Control = struct('Cp_file',0,'Ct_file',0,'Prat',0,'Vin',0,'Vrat',0,'Vout',0,'Oin',0,'Orat',0);
+    Control = struct('CTR_flag',0,'Cp_file','','Ct_file','','Prat',0,'Vin',0,'Vrat',0,'Vout',0,'Oin',0,'Orat',0);
     coder.cstructname(Control,'Control');
     op_pts = struct('wsp',0,'pitch',0,'rpm',0);
     Blade = struct('r',0,'C',0,'t_C',0,'AeroTwist',0,'preflap',0,'pro_t_C',0,'pro_AoA',0,'pro_cL',0,'pro_cD',0);
@@ -79,14 +79,15 @@ function [General, op_pts, Blade, Control] = read_turbine_file(file)
                 aerofoil_file = strtrim(filebyline{header_row_ids(i)+1});
                 [Blade.pro_t_C, Blade.pro_AoA, Blade.pro_cL, Blade.pro_cD] = read_pc_file(aerofoil_file);
             case 'CONTROL'
-                Control.Cp_file = strtrim(extractBefore((filebyline{header_row_ids(i)+1}),';'));
-                Control.Ct_file = strtrim(extractBefore((filebyline{header_row_ids(i)+2}),';'));
-                Control.Prat = real(str2double(extractBefore((filebyline{header_row_ids(i)+3}),';')));
-                Control.Vin = real(str2double(extractBefore((filebyline{header_row_ids(i)+4}),';')));
-                Control.Vrat = real(str2double(extractBefore((filebyline{header_row_ids(i)+5}),';')));
-                Control.Vout = real(str2double(extractBefore((filebyline{header_row_ids(i)+6}),';')));
-                Control.Oin = real(str2double(extractBefore((filebyline{header_row_ids(i)+7}),';')));
-                Control.Orat = real(str2double(extractBefore((filebyline{header_row_ids(i)+8}),';')));
+                Control.CTR_flag = real(str2double(extractBefore((filebyline{header_row_ids(i)+1}),';')));
+                Control.Cp_file = strtrim(extractBefore((filebyline{header_row_ids(i)+2}),';'));
+                Control.Ct_file = strtrim(extractBefore((filebyline{header_row_ids(i)+3}),';'));
+                Control.Prat = real(str2double(extractBefore((filebyline{header_row_ids(i)+4}),';')));
+                Control.Vin = real(str2double(extractBefore((filebyline{header_row_ids(i)+5}),';')));
+                Control.Vrat = real(str2double(extractBefore((filebyline{header_row_ids(i)+6}),';')));
+                Control.Vout = real(str2double(extractBefore((filebyline{header_row_ids(i)+7}),';')));
+                Control.Oin = real(str2double(extractBefore((filebyline{header_row_ids(i)+8}),';')));
+                Control.Orat = real(str2double(extractBefore((filebyline{header_row_ids(i)+9}),';')));
         end
     end
 end
