@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.coder" plugin-version="R2021a">
-  <configuration build-checksum="354333455" file="G:\BEM\BEM\Compile\bem_calc.prj" location="G:\BEM\BEM\Compile" name="bem_calc" target="target.unifiedcoder" target-name="MATLAB Coder">
+  <configuration build-checksum="3376924066" file="G:\BEM\BEM\Compile\bem_calc.prj" location="G:\BEM\BEM\Compile" name="bem_calc" target="target.unifiedcoder" target-name="MATLAB Coder">
     <profile key="profile.mex">
       <param.BuiltInstrumentedMex>false</param.BuiltInstrumentedMex>
       <param.RanInstrumentedMex>false</param.RanInstrumentedMex>
@@ -866,14 +866,14 @@
       </unset>
     </profile>
     <param.objective>option.objective.c</param.objective>
-    <param.WorkflowStep>generateCode</param.WorkflowStep>
+    <param.WorkflowStep>workflowSummary</param.WorkflowStep>
     <param.TestSnippets>
       <item>bem_calc('G:\BEM\BEM\Data\NREL_5MW.txt')</item>
       <item>Turbine_caller('G:\BEM\BEM\Data\NREL_5MW.txt')</item>
     </param.TestSnippets>
     <param.ExternalFcnMajority>column</param.ExternalFcnMajority>
     <param.UseGlobals>option.UseGlobals.No</param.UseGlobals>
-    <param.outputfile>${PROJECT_ROOT}\bem_calc_mex.mexw64</param.outputfile>
+    <param.outputfile>${PROJECT_ROOT}\codegen\exe\bem_calc\bem_calc.exe</param.outputfile>
     <param.version>R2012a</param.version>
     <param.HasECoderFeatures>false</param.HasECoderFeatures>
     <param.HasGpuCoder>false</param.HasGpuCoder>
@@ -900,15 +900,15 @@
     <var.redirectedInputTypeData />
     <var.DismissScreener>true</var.DismissScreener>
     <param.unifiedParamStorage />
-    <var.gc.lastOutputRoot>codegen\mex\bem_calc</var.gc.lastOutputRoot>
-    <var.gc.lastOutputType>MEX_FILE</var.gc.lastOutputType>
-    <var.gc.preBuildChecksum>354333455</var.gc.preBuildChecksum>
+    <var.gc.lastOutputRoot>codegen\exe\bem_calc</var.gc.lastOutputRoot>
+    <var.gc.lastOutputType>EXECUTABLE</var.gc.lastOutputType>
+    <var.gc.preBuildChecksum>3376924066</var.gc.preBuildChecksum>
     <var.cfi.lastOutputRoot>codegen\mex\bem_calc</var.cfi.lastOutputRoot>
-    <var.cfi.preBuildChecksum>1075596026</var.cfi.preBuildChecksum>
+    <var.cfi.preBuildChecksum>2822608690</var.cfi.preBuildChecksum>
     <var.lastCfiTestSnippet>bem_calc('G:\BEM\BEM\Data\NREL_5MW.txt')</var.lastCfiTestSnippet>
     <var.outdatedOnRestore>false</var.outdatedOnRestore>
-    <var.lastUserSourceChecksum>&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;&lt;checksum&gt;&lt;includedFiles&gt;&lt;file&gt;G:\BEM\BEM\Compile\bem_calc.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Core\core_bem.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\read_pc_file.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\read_turbine_file.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\split_string.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\write_output.m&lt;/file&gt;&lt;/includedFiles&gt;&lt;value&gt;4058023621&lt;/value&gt;&lt;/checksum&gt;</var.lastUserSourceChecksum>
-    <var.sourceSetState>&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;&lt;sourceModel&gt;&lt;primarySourceFiles&gt;&lt;file&gt;G:\BEM\BEM\Compile\bem_calc.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Core\core_bem.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\read_pc_file.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\read_turbine_file.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\split_string.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\write_output.m&lt;/file&gt;&lt;/primarySourceFiles&gt;&lt;fixedPointSourceFiles/&gt;&lt;fixedPointSourceRegistered&gt;false&lt;/fixedPointSourceRegistered&gt;&lt;fixedPointSourceSelected&gt;false&lt;/fixedPointSourceSelected&gt;&lt;/sourceModel&gt;</var.sourceSetState>
+    <var.lastUserSourceChecksum>&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;&lt;checksum&gt;&lt;includedFiles&gt;&lt;file&gt;G:\BEM\BEM\Compile\bem_calc.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Core\core_bem.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Core\core_pitch_ctr.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\intersect.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\read_Cp_Ct.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\read_pc_file.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\read_turbine_file.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\split_string.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\write_output.m&lt;/file&gt;&lt;/includedFiles&gt;&lt;value&gt;524784171&lt;/value&gt;&lt;/checksum&gt;</var.lastUserSourceChecksum>
+    <var.sourceSetState>&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;&lt;sourceModel&gt;&lt;primarySourceFiles&gt;&lt;file&gt;G:\BEM\BEM\Compile\bem_calc.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Core\core_bem.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Core\core_pitch_ctr.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\intersect.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\read_Cp_Ct.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\read_pc_file.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\read_turbine_file.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\split_string.m&lt;/file&gt;&lt;file&gt;G:\BEM\BEM\Util\write_output.m&lt;/file&gt;&lt;/primarySourceFiles&gt;&lt;fixedPointSourceFiles/&gt;&lt;fixedPointSourceRegistered&gt;false&lt;/fixedPointSourceRegistered&gt;&lt;fixedPointSourceSelected&gt;false&lt;/fixedPointSourceSelected&gt;&lt;/sourceModel&gt;</var.sourceSetState>
     <param.forceMexBuild>false</param.forceMexBuild>
     <param.NoDefaultJIT>false</param.NoDefaultJIT>
     <param.configImportActive>false</param.configImportActive>
@@ -919,8 +919,8 @@
     <var.ecoderEnabled>false</var.ecoderEnabled>
     <param.mex.outputfile>bem_calc_mex</param.mex.outputfile>
     <param.grt.outputfile>bem_calc</param.grt.outputfile>
-    <param.artifact>option.target.artifact.mex</param.artifact>
-    <param.outputfile>${PROJECT_ROOT}\bem_calc_mex.mexw64</param.outputfile>
+    <param.artifact>option.target.artifact.exe</param.artifact>
+    <param.outputfile>${PROJECT_ROOT}\codegen\exe\bem_calc\bem_calc.exe</param.outputfile>
     <param.CppNamespace />
     <param.CppPackagesToNamespaces>true</param.CppPackagesToNamespaces>
     <param.CppNamespaceForMathworksCode>coder</param.CppNamespaceForMathworksCode>
@@ -1040,7 +1040,6 @@
       <var.ecoderEnabled />
       <param.mex.outputfile />
       <param.grt.outputfile />
-      <param.artifact />
       <param.CppNamespace />
       <param.CppPackagesToNamespaces />
       <param.CppNamespaceForMathworksCode />
@@ -1147,7 +1146,7 @@
       </file>
     </fileset.inputtypes>
     <build-deliverables>
-      <file location="${PROJECT_ROOT}" name="bem_calc_mex.mexw64" optional="false">G:\BEM\BEM\Compile\bem_calc_mex.mexw64</file>
+      <file location="${PROJECT_ROOT}\codegen\exe\bem_calc" name="bem_calc.exe" optional="false">G:\BEM\BEM\Compile\codegen\exe\bem_calc\bem_calc.exe</file>
     </build-deliverables>
     <workflow />
     <matlab>

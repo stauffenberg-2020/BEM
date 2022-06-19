@@ -52,11 +52,12 @@ r	C	t_C	AeroTwist
 61.500	0.961	17	0.000
 
 # AEROFOIL_FILE
-.\Data\NREL5MWRefTurb_v50\data\NREL_5MW_pc.txt
+G:\BEM\BEM\Data\NREL5MWRefTurb_v50\data\NREL_5MW_pc.txt
 
 # CONTROL
-.\Data\Cp_data.txt; % Path to Cp matrix
-.\Data\Ct_data.txt; % Path to Ct matrix
+0; Simple pitch controller flag (0/1). If 1, pitch from OPERATIONAL_SET-POINTS will not be used and will be calculated based on data in this section
+G:\BEM\BEM\Data\Cp_data.txt; % Path to Cp matrix
+G:\BEM\BEM\Data\Ct_data.txt; % Path to Ct matrix
 5000; % Power rating in kW
 3; % Cut-in wind speed
 11.4; Rated wind speed
