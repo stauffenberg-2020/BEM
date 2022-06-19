@@ -22,7 +22,7 @@ plotPitchVsLambda(pitch, lambda, Cp);
 subplot(1,2,2)
 plotCpVsLambda(pitch, lambda, Cp);
 
-[op_pts.pitch, region] = calc_pitch(op_pts.wsp, op_pts.rpm, General.rho, Blade.r(end), pitch, lambda, Cp, CTRL.Oin, CTRL.Orat, CTRL.Prat);
+[op_pts.pitch, region] = core_pitch_ctr(op_pts.wsp, op_pts.rpm, General.rho, Blade.r(end), pitch, lambda, Cp, CTRL.Oin, CTRL.Orat, CTRL.Prat, 0.944);
 
 [~, output, ~] = core_bem(General, op_pts, Blade);
 
