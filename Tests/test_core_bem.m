@@ -1,4 +1,4 @@
-file = '\Data\NREL_5MW.txt';   
+file = '/Data/NREL_5MW.txt';   
 file = fullfile(pwd,file);
 
 repoFolder = pwd;
