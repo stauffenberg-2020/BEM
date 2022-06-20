@@ -1,7 +1,7 @@
-file = '..\Data\NREL_5MW.txt';   
+file = '\Data\NREL_5MW.txt';   
 file = fullfile(pwd,file);
 
-repoFolder = fullfile(pwd,'..');
+repoFolder = pwd;
 s = pathsep;
 pathStr = [s, path, s];
 onPath  = contains(pathStr, [s, repoFolder, s], 'IgnoreCase', ispc);
