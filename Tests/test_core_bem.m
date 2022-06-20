@@ -1,6 +1,15 @@
 file = '..\Data\NREL_5MW.txt';   
 file = fullfile(pwd,file);
 
+repoFolder = fullfile(pwd,'..');
+s = pathsep;
+pathStr = [s, path, s];
+onPath  = contains(pathStr, [s, repoFolder, s], 'IgnoreCase', ispc);
+if onPath == 0
+    addpath(genpath(repoFolder));
+end
+
+
 [General, op_pts, Blade, ~] = read_turbine_file(file);
 
 Blade.preflap = zeros(length(Blade.r),1);
