@@ -1,13 +1,13 @@
-file = '/Data/NREL_5MW.txt';   
-file = fullfile(pwd,file);
+file = '/home/runner/work/BEM/BEM/Data/NREL_5MW.txt';   
+addpath(genpath('/home/runner/work/BEM/BEM'));
 
-repoFolder = pwd;
-s = pathsep;
-pathStr = [s, path, s];
-onPath  = contains(pathStr, [s, repoFolder, s], 'IgnoreCase', ispc);
-if onPath == 0
-    addpath(genpath(repoFolder));
-end
+% repoFolder = pwd;
+% s = pathsep;
+% pathStr = [s, path, s];
+% onPath  = contains(pathStr, [s, repoFolder, s], 'IgnoreCase', ispc);
+% if onPath == 0
+%     addpath(genpath(repoFolder));
+% end
 
 
 [General, op_pts, Blade, ~] = read_turbine_file(file);
