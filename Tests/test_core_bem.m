@@ -13,7 +13,7 @@ Blade.preflap = zeros(length(Blade.r),1);
 
 baseline_output = load(fullfile(folder,'baseline_output.mat'));
 
-if output == baseline_output.output % Entire output checking needs to be added
+if round(output,4) == round(baseline_output.output,4)
     disp('Test Passed')
 else
     throw(exception)
