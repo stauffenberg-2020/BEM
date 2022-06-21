@@ -11,7 +11,7 @@ Blade.preflap = zeros(length(Blade.r),1);
 
 [output_details, output, BEM] = core_bem(General, op_pts, Blade);
 
-baseline_output = load('baseline_output');
+baseline_output = load(fullfile(folder,'baseline_output.mat'));
 
 if output == baseline_output.output % Entire output checking needs to be added
     disp('Test Passed')
