@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with MATLAB Actions
 
-name: MATLAB Build
+name: MATLAB Test_BEM
 
 # Controls when the action will run. 
 on:

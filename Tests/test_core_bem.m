@@ -1,14 +1,9 @@
-file = '/home/runner/work/BEM/BEM/Data/NREL_5MW.txt';   
-addpath(genpath('/home/runner/work/BEM/BEM'));
+folder = pwd;
+filename = 'NREL_5MW.txt';   
+file = fullfile(folder,filename);
 
-% repoFolder = pwd;
-% s = pathsep;
-% pathStr = [s, path, s];
-% onPath  = contains(pathStr, [s, repoFolder, s], 'IgnoreCase', ispc);
-% if onPath == 0
-%     addpath(genpath(repoFolder));
-% end
-
+parentDirectory = fileparts(cd);
+addpath(genpath(parentDirectory));
 
 [General, op_pts, Blade, ~] = read_turbine_file(file);
 
@@ -16,8 +11,10 @@ Blade.preflap = zeros(length(Blade.r),1);
 
 [output_details, output, BEM] = core_bem(General, op_pts, Blade);
 
-if round(output(1,1),4) == 35.9070 % Entire output checking needs to be added
+baseline_output = load('baseline_output');
+
+if output == baseline_output.output % Entire output checking needs to be added
     disp('Test Passed')
 else
-    disp('Test Failed')
+    throw(exception)
 end
