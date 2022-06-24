@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with MATLAB Actions
 
-name: Test BEM
+name: Test Build
 
 # Controls when the action will run. 
 on:
@@ -40,4 +40,4 @@ jobs:
       - name: Run all tests
         uses: matlab-actions/run-command@v1
         with:
-          command: addpath('Tests'); results = runtests('test_core_bem.m'); assertSuccess(results);
+          command: addpath('Tests'); results = runtests('test_build.m'); assertSuccess(results);

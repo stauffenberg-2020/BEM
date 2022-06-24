@@ -77,7 +77,6 @@ function [General, op_pts, Blade, Control] = read_turbine_file(file)
                 Blade.AeroTwist=data_bld(:,4);
             case 'AEROFOIL_FILE'
                 aerofoil_file = strtrim(filebyline{header_row_ids(i)+1});
-                aerofoil_file = fullfile(pwd,aerofoil_file);
                 [Blade.pro_t_C, Blade.pro_AoA, Blade.pro_cL, Blade.pro_cD] = read_pc_file(aerofoil_file);
             case 'CONTROL'
                 Control.CTR_flag = real(str2double(extractBefore((filebyline{header_row_ids(i)+1}),';')));
