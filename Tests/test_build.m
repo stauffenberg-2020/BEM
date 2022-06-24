@@ -1,6 +1,6 @@
 cd ..
 addpath(genpath(pwd))
-cd Compile\
+cd Compile/
 warning('off','all');
 
 % Build library
@@ -9,7 +9,7 @@ disp('Library build successful')
 
 % Build MEX
 clear functions
-codegen -report bem_calc.m -args {'NREL_5MW.txt'} -test test_mex
+codegen -report bem_calc.m -args {'NREL_5MW.txt'} -test test_core_bem
 disp('MEX build successful')
 
 % Build EXE
