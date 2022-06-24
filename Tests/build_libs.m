@@ -1,6 +1,6 @@
 cd ..
 addpath(genpath(pwd))
-cd Compile
+cd Compile/
 warning('off','all');
 
 % Build library
