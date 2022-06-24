@@ -1,6 +1,9 @@
-% Build library
+cd ..
+addpath(genpath(pwd))
 cd Compile\
 warning('off','all');
+
+% Build library
 codegen -report -config:lib bem_calc.m -args {'NREL_5MW.txt'}
 disp('Library build successful')
 
