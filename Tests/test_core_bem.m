@@ -1,4 +1,6 @@
-filename = 'NREL_5MW.txt';   
+filename = 'NREL_5MW.txt';
+cd ..
+addpath(genpath(pwd))
 
 [General, op_pts, Blade, ~] = read_turbine_file(filename);
 
