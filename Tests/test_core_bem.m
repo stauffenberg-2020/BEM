@@ -9,7 +9,7 @@ Blade.preflap = zeros(length(Blade.r),1);
 [output_details, output, BEM] = core_bem(General, op_pts, Blade);
 
 try 
-    baseline_output = load('baseline_output.mat');
+    baseline_output = load('NREL_5MW_output.mat');
 catch
     disp('Unable to load baseline data')
 end
