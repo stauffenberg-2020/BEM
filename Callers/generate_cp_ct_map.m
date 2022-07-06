@@ -1,24 +1,12 @@
 % Script for generating Cp (and Ct) map
 
 clearvars;close all;clc;
-
-ae = '.\Data\NREL5MWRefTurb_v50\data\NREL_5MW_ae.txt'; % ae data file
-htc = '.\Data\NREL5MWRefTurb_v50\htc\NREL_5MW_reference_wind_turbine.htc'; % htc file
-pc = '.\Data\NREL5MWRefTurb_v50\data\NREL_5MW_pc.txt'; % Aerofoil data file
-
-[BLD.r, BLD.C, BLD.t_C, nsec] = read_ae_file(ae);
-[BLD.AeroTwist] = read_aero_twist(htc, nsec);
-[BLD.pro_t_C, BLD.pro_AoA, BLD.pro_cL, BLD.pro_cD] = read_pc_file(pc);
+filename = 'NREL_5MW.txt';
+[General, ~, BLD, ~] = read_turbine_file(filename);
 BLD.preflap = zeros(length(BLD.r),1);
 
-General.N=3;
-General.rho = 1.225;
-General.induction = 1; % 0 or 1, 0 = Induction Off, 1 = Induction On
-General.tip_loss = 1; % 0 or 1, 0 = Prandtl's tip loss correction Off, 1 = Prandtl's tip loss correction On
-General.highCT = 2; % 0 or 1 or 2, 0 = Off, 1 = As per HANSEN eqn. 6.38, 2 = As per HANSEN eqn. 6.37
-
-lambda = unique([2:0.2:3.8 4.25:0.25:6.75 7.5:0.5:8 8:1:20]); % Lambda (TSR) range, 2:1:20
-pitch = unique([-5:0.25:5 5:0.5:10 10:1:25])'; % Pitch range, -5:0.5:25
+lambda = unique([2:0.2:3.8 4.25:0.25:6.75 7.5:0.5:8 8:1:20]); % Lambda (TSR) range, 2:1:20, nonLinspace(2,20,35,'exp10')
+pitch = unique([-5:0.25:5 5:0.5:10 10:1:25])'; % Pitch range, -5:0.5:25, nonLinspace(-5,25,66,'exp10')' 
 
 wsp = 8; % Just a temp variable for deriving rpm corresponding to lambda
 
@@ -33,7 +21,7 @@ for i=1:length(pitch)
     Ct(i,:) = output(:,9);
 end
 %
-path = '.\Data\';
+path = './Data/';
 write_Cp_Ct(lambda,pitch,Cp,Ct,path);
 %% Plotting Cp & Ct
 

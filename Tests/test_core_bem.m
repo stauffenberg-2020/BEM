@@ -9,14 +9,14 @@ Blade.preflap = zeros(length(Blade.r),1);
 [output_details, output, BEM] = core_bem(General, op_pts, Blade);
 
 try 
-    baseline_output = load('NREL_5MW_output.mat');
+    load('NREL_5MW_output.mat');
 catch
     disp('Unable to load baseline data')
 end
 
-if round(output,4) == round(baseline_output.output,4)
-    disp('Results matching upto 4th decimal, Test Passed')
+if max(abs((output./baseline_output)-1)*100,[],'all')<0.01
+    disp('Test Passed, Changes are within 0.01% w.r.t baseline')
 else
-    disp('Results not matching')
+    disp('Results variation are more than 0.01%')
     throw(exception)
 end

@@ -1,6 +1,6 @@
 % Controller testing
 clearvars;clc;close all;
-file = '.\Data\NREL_5MW.txt';
+file = 'NREL_5MW.txt';
 
 [General, op_pts, Blade, CTRL] = read_turbine_file(file);
 orig_pitch = op_pts.pitch;

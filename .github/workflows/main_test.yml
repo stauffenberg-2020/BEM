@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with MATLAB Actions
 
-name: Test BEM
+name: BEM_Test
 
 # Controls when the action will run. 
 on:
@@ -24,7 +24,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
         with:
-          ref: 'test_bench'
+          ref: 'main'
       
       # Sets up MATLAB on the GitHub Actions runner
       - name: Setup MATLAB
