@@ -50,7 +50,7 @@ function [General, op_pts, Blade, Control] = read_turbine_file(file)
                 General.induction = real(str2double(extractBefore((filebyline{header_row_ids(i)+3}),';')));
                 General.tip_loss = real(str2double(extractBefore((filebyline{header_row_ids(i)+4}),';')));
                 General.highCT = real(str2double(extractBefore((filebyline{header_row_ids(i)+5}),';')));
-            case 'OPERATIONAL_SET-POINTS'
+            case 'OPERATIONAL_SET_POINTS'
                 headers = split_string(filebyline{header_row_ids(i)+1},' ');
                 data = zeros(header_row_ids(i+1)-header_row_ids(i)-3,length(headers));
                 for j=1:header_row_ids(i+1)-header_row_ids(i)-3

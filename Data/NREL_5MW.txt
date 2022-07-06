@@ -3,9 +3,9 @@
 1.225; % Density of air
 1; % Induction off/on = 0/1
 1; % Prandtl's tip loss correction off/on = 0/1
-2; % % Glauert's high CT correction off/per HANSEN eqn 6.38/per HANSEN eqn 6.37 = 0/1/2
+2; % Glauert's high CT correction off/per HANSEN eqn 6.38/per HANSEN eqn 6.37 = 0/1/2
 
-# OPERATIONAL_SET-POINTS
+# OPERATIONAL_SET_POINTS
 wsp	pitch	rpm
 4	0.561	6.90
 5	0.000	6.90
@@ -32,18 +32,18 @@ wsp	pitch	rpm
 
 # BLADE_DETAILS
 r	C	t_C	AeroTwist
-1.367	3.542	100	13.300
-4.100	3.854	100	13.300
-6.833	4.167	90	13.300
-10.250	4.557	40	13.300
+1.367	3.542	100	13.308
+4.100	3.854	100	13.308
+6.833	4.167	90	13.308
+10.250	4.557	40	13.308
 14.350	4.652	35	11.480
-18.450	4.458	35	10.160
+18.450	4.458	35	10.162
 22.550	4.249	30	9.011
 26.650	4.007	25	7.795
 30.750	3.748	25	6.544
 34.850	3.502	21	5.361
 38.950	3.256	21	4.188
-43.050	3.01	17	3.125
+43.050	3.010	17	3.125
 47.150	2.764	17	2.319
 51.250	2.518	17	1.526
 54.667	2.313	17	0.863
@@ -55,20 +55,12 @@ r	C	t_C	AeroTwist
 Data/NREL5MWRefTurb_v50/data/NREL_5MW_pc.txt
 
 # CONTROL
-0; Simple pitch controller flag (0/1). If 1, pitch from OPERATIONAL_SET-POINTS will not be used and will be calculated based on data in this section
-G:\BEM\BEM\Data\Cp_data.txt; % Path to Cp matrix
-G:\BEM\BEM\Data\Ct_data.txt; % Path to Ct matrix
-5000; % Power rating in kW
-3; % Cut-in wind speed
-11.4; Rated wind speed
-25; % Cut-out wind speed
-6.9; Cut-in rotor rpm
-12.1; Rated rotor rpm
-
-
-
-
-
-
-
-
+0; % Simple pitch controller flag (0/1). If 1, pitch from OPERATIONAL_SET_POINTS will not be used and instead calculated
+Data/Cp_data.txt; % Path to Cp matrix
+Data/Ct_data.txt; % Path to Cp matrix
+5000; % Rated Power in kW
+3.0; % Cut in wind speed (m/s)
+11.4; % Rated wind speed (m/s)
+25.0; % Cut out wind speed (m/s)
+6.9; % Cut in rotor rpm
+12.1; % Rated rotor rpm
