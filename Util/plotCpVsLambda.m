@@ -26,7 +26,9 @@ function [CM,cc] = plotCpLambdaContour(inp_x,inp_z,inp_y)
     [X,Y]=meshgrid(inp_x,inp_z);
     [X_inp,Y_inp]=meshgrid(inp_x,inp_z);
     Z=interp2(X_inp,Y_inp,inp_y',X,Y);
-    [CM, cc] = contour(X,Z,Y,inp_z,'ShowText','on');
+    [CM, cc] = contour(X,Z,Y,inp_z);
+    cc.LevelList = round(cc.LevelList,1);
+    clabel(CM,cc);
     ylim([0 0.593]);
     grid on
     xlabel('Lambda')
