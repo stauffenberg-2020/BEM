@@ -32,7 +32,8 @@
     BEM.V_Res = sqrt(repmat((wsp.^2)',length(BEM.r),1)+BEM.Omega_r.^2); % Resultant velocity seen by each of the section [m/s]
     BEM.phi = atan2d((repmat(wsp',length(BEM.r),1).*(1-BEM.aA)),(BEM.Omega_r.*(1+BEM.aT))); % Calculating flow angle PHI [deg]
     BEM.alpha = BEM.phi-repmat(BEM.AeroTwist,1,length(wsp))-repmat(pitch',length(BEM.r),1); % Angle of attack seen by each section [deg]
-    [BEM.CL, BEM.CD] = CL_CD_vs_alpha(BEM.t_C, BLD.pro_t_C, BLD.pro_AoA, BLD.pro_cL, BLD.pro_cD, BEM.alpha); % CL, CD coefficients
+    BEM.CL = interp2(BLD.pro_AoA, BLD.pro_t_C, (BLD.pro_cL)', BEM.alpha, repmat(BEM.t_C,1,length(wsp))); % Calculating CL
+    BEM.CD = interp2(BLD.pro_AoA, BLD.pro_t_C, (BLD.pro_cD)', BEM.alpha, repmat(BEM.t_C,1,length(wsp))); % Calculating CL
     BEM.sig = BEM.C*General.N./(2*pi.*BEM.r); % Solidity ratio
     BEM.CN = BEM.CL.*cosd(BEM.phi)+BEM.CD.*sind(BEM.phi); % Sectional Normal force coefficient
     BEM.CT = BEM.CL.*sind(BEM.phi)-BEM.CD.*cosd(BEM.phi); % Sectional Tangential force coefficient
@@ -65,7 +66,8 @@
                     if BEM.alpha(i,j) < -180 || BEM.alpha(i,j) > 180
                         BEM.alpha(i,j) = mod(BEM.alpha(i,j), 180); % Check here once
                     end
-                    [BEM.CL(i,j), BEM.CD(i,j)] = CL_CD_vs_alpha(BEM.t_C(i), BLD.pro_t_C, BLD.pro_AoA, BLD.pro_cL, BLD.pro_cD, BEM.alpha(i,j)); % CL, CD coefficients
+                    BEM.CL(i,j) = interp2(BLD.pro_AoA, BLD.pro_t_C, (BLD.pro_cL)', BEM.alpha(i,j), BEM.t_C(i));
+                    BEM.CD(i,j) = interp2(BLD.pro_AoA, BLD.pro_t_C, (BLD.pro_cD)', BEM.alpha(i,j), BEM.t_C(i));
                     BEM.CN(i,j) = BEM.CL(i,j).*cosd(BEM.phi(i,j))+BEM.CD(i,j).*sind(BEM.phi(i,j)); % Sectional Normal force coefficient (Thrust direction force coefficient)
                     BEM.CT(i,j) = BEM.CL(i,j).*sind(BEM.phi(i,j))-BEM.CD(i,j).*cosd(BEM.phi(i,j)); % Sectional Tangential force coefficient
                     if General.highCT
@@ -125,46 +127,6 @@
 end
 
 %% Supporting functions
-
-function index = first_higher(A, target)
-    b = (find(A > target));
-    index = b(1);
-end
-
-function index = first_lower(A, target)
-    b = (find(A < target));
-    index = b(end);
-end
-
-function [CL, CD] = CL_CD_vs_alpha(all_sect_t_C, available_t_C, alpha, cL, cD, target_alpha)
-    id = zeros(length(all_sect_t_C),2);
-    CL = zeros(length(all_sect_t_C),size(target_alpha,2));
-    CD = zeros(length(all_sect_t_C),size(target_alpha,2));
-    new_CL_profi = zeros(size(cL,1),1);
-    new_CD_profi = zeros(size(cL,1),1);
-    for i=1:length(all_sect_t_C)
-        for j=1:size(target_alpha,2)
-            if any(all_sect_t_C(i) == available_t_C)
-                index = find(all_sect_t_C(i) == available_t_C); 
-                id(i,1) = index(1); % Multi line statement for coder compatibility
-                CL(i,j) = interp1(alpha,cL(:,id(i,1)),target_alpha(i,j)); % Interpolation for CL on an existing CLa curve
-                CD(i,j) = interp1(alpha,cD(:,id(i,1)),target_alpha(i,j));
-            elseif all_sect_t_C(i)>100 % Profile data correction
-                index = find(100 == available_t_C);
-                id(i,1) = index(1); % Multi line statement for coder compatibility
-                CL(i,j) = interp1(alpha,cL(:,id(i,1)),target_alpha(i,j)); % Interpolation for CL on 100% t/c CLa curve
-                CD(i,j) = interp1(alpha,cD(:,id(i,1)),target_alpha(i,j));
-            else
-                id(i,1) = first_lower(available_t_C, all_sect_t_C(i));
-                id(i,2) = first_higher(available_t_C, all_sect_t_C(i));
-                new_CL_profi(:,1) = cL(:,id(i,1)) + (cL(:,id(i,2))-cL(:,id(i,1))).*(all_sect_t_C(i)-available_t_C(id(i,1)))./(available_t_C(id(i,2))-available_t_C(id(i,1))); % ((y-y1)/(x-x1)) = ((y2-y1)/(x2-x1))
-                new_CD_profi(:,1) = cD(:,id(i,1)) + (cD(:,id(i,2))-cD(:,id(i,1))).*(all_sect_t_C(i)-available_t_C(id(i,1)))./(available_t_C(id(i,2))-available_t_C(id(i,1)));
-                CL(i,j) = interp1(alpha,new_CL_profi,target_alpha(i,j)); % Interpolation for CL over the t/C ratio specific CLa curve
-                CD(i,j) = interp1(alpha,new_CD_profi,target_alpha(i,j));
-            end
-        end
-    end
-end
 
 function a = calc_ind_using_high_CT_approx(method, a_old, F, phi, sig, CN)
     a = 0; % Initializing variable for coder compatibility
