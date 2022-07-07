@@ -14,9 +14,15 @@ catch
     disp('Unable to load baseline data')
 end
 
-if max(abs((output./baseline_output)-1)*100,[],'all')<0.01
+
+if all((output-baseline_output) == zeros(size(output)),'all')
+    disp('Test Passed, Results are exactly same')
+elseif round(output,3) == round(baseline_output,3)
+    disp('Test Passed, Results matching upto 3rd decimal')
+elseif max(abs((output./baseline_output)-1)*100,[],'all')<0.01
     disp('Test Passed, Changes are within 0.01% w.r.t baseline')
 else
-    disp('Results variation are more than 0.01%')
+    variation = max(abs((output./baseline_output)-1)*100,[],'all');
+    fprintf('Test Failed, Results variation are upto %0.2f %%\n',variation)
     throw(exception)
 end
