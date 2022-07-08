@@ -1,86 +1,80 @@
-% Thrust Limiter Investigations
+% Flap Load Limiting Investigations
 clearvars;clc;
-op_data = readmatrix('G:\BEM\BEM\Data\NREL5MWRefTurb_v50\data\operational_data.opt','FileType','text');
-ae = readmatrix('G:\BEM\BEM\Data\NREL5MWRefTurb_v50\data\NREL_5MW_ae.txt');
-pc = 'G:\BEM\BEM\Data\NREL5MWRefTurb_v50\data\NREL_5MW_pc.txt';
 
-N=3;
-rho = 1.225; % Air Density [Kg/m^3]
-op_pts.wsp = op_data(:,1);
-op_pts.pitch = op_data(:,2); % Operational set points, Collective Pitch [deg]
-op_pts.rpm = op_data(:,3); % Operational set points, LSS Rotor speed [rpm]
+filename = 'NREL_5MW.txt';
+[General, op_pts, BLD, ~] = read_turbine_file(filename);
+BLD.preflap = zeros(length(BLD.r),1);
+op_pts.pitch(9:end) = [3.83,6.60,8.7,10.45,12.06,13.54,14.92,16.23,17.47,18.70,19.94,21.18,22.35,23.47]'; % Values from https://www.nrel.gov/docs/fy09osti/38060.pdf
 
-sec_r = ae(2:size(ae,1),1);
-sec_C = ae(2:size(ae,1),3);
-sec_t_C = ae(2:size(ae,1),5);
-sec_twist = [-13.3,-13.3,-13.3,-13.3,-11.48,-10.16,-9.011,-7.795,-6.544,-5.361,-4.188,-3.125,-2.319,-1.526,-0.863,-0.37,-0.106, 0]'; % to be read from *.htc file
-
-
-BLD = organize_blade_data(sec_r, sec_C, sec_t_C, sec_twist, pc);
-
-
-AeroFlags.induction = 0; % 0 or 1, 0 = Induction Off, 1 = Induction On
-AeroFlags.tip_loss = 0; % 0 or 1, 0 = Prandtl's tip loss correction Off, 1 = Prandtl's tip loss correction On
-AeroFlags.highCT = 0; % 0 or 1 or 2, 0 = Off, 1 = As per HANSEN eqn. 6.38, 2 = As per HANSEN eqn. 6.37
-
-%% Core BEM calculations
-
-[output_details,output,BEM] = core_bem(rho, N, op_pts, BLD, AeroFlags);
+[output_details, output, BEM] = core_bem(General, op_pts, BLD);
 
 %% Finding solution for target Root Flap Moment
-target = max(output(:,3))*[0.96 0.97 0.98 0.99]; % Maximum root flap load target [kNm]
+target = max(output(:,3))*[0.8 0.85 0.9 0.95]; % Maximum root flap load target [kNm]
 
 for i=1:length(target)
     tuning_ids{:,i}=find(output(:,3)>target(i)); % finding indices of operating points that exceed the target
 
     if ~isempty(tuning_ids{i})
+        
+        tuning_pts.wsp = op_pts.wsp(tuning_ids{i});
+        tuning_pts.pitch = op_pts.pitch(tuning_ids{i});
+        tuning_pts.rpm = op_pts.rpm(tuning_ids{i});
+
+        
         % Better method by using optimization toolbox
-%         fun=@(x)solve_for_pitch(rho, op_pts.wsp(tuning_ids{i}), x, op_pts.rpm(tuning_ids{i}), BLD, AeroFlags)-target(i);
-%         tuned_pitch = lsqnonlin(fun,op_pts.pitch(tuning_ids{i})); % Solving the function with a initial value
+        fun=@(x)solve_for_pitch(x, General, tuning_pts, BLD)-target(i);
+        tuned_pitch = lsqnonlin(fun,tuning_pts.pitch); % Solving the function with a initial value
 
         % Basic method within base MATLAB
-        fun=@(x)sum((solve_for_pitch(rho, op_pts.wsp(tuning_ids{i}), x, op_pts.rpm(tuning_ids{i}), BLD, AeroFlags)-target(i)).^2);
-        tuned_pitch = fminsearch (fun,op_pts.pitch(tuning_ids{i})); 
+%         fun=@(x)sum((solve_for_pitch(x, General, tuning_pts, BLD)-target(i)).^2);
+%         tuned_pitch = fminsearch (fun,tuning_pts.pitch); 
 
         % Updating the output
-        op_pts.pitch_tuned{i} = op_pts.pitch; % Creating a copy of the original output (for further updation)
-        op_pts.pitch_tuned{i}(tuning_ids{i}) = tuned_pitch; % Tuned values updated
+        op_pts.pitch_tuned{i} = op_pts.pitch; % Creating a copy of the original output (for further updation) 
+        op_pts.pitch_tuned{i}(tuning_ids{i}) = tuned_pitch; % Tuned values updated         
         
         op_pts_tuned.wsp = op_pts.wsp(tuning_ids{i});
         op_pts_tuned.pitch = tuned_pitch;
         op_pts_tuned.rpm = op_pts.rpm(tuning_ids{i});
-
-        [~,output_tune] = core_bem(rho, N,op_pts_tuned, BLD, AeroFlags);
+        
+        [~,output_tune] = core_bem(General, op_pts_tuned, BLD);
         output_tuned{i} = output; % Creating a copy of the original output (for further updation)
         output_tuned{i}(tuning_ids{i},:) = output_tune; % Updated output
     end
+    clear tuning_pts
 end
 %% Plotting
 
-figure('Renderer', 'painters', 'Position', [10 10 1000 1000])
+MP = get(0,'MonitorPositions');
+if size(MP,1) == 1
+    SS = MP(1,:);
+else
+    SS = MP(2,:); % To have the results displayed better in bigger screen
+end
+figure('position',[SS(1)+SS(3)*0.15, SS(2)+SS(4)*0.15, SS(3)*0.7, SS(4)*0.7]);
 subplot(2,2,1)
-plot(op_pts.wsp,op_pts.pitch,'k*-','DisplayName','TL Off')
+plot(op_pts.wsp,op_pts.pitch,'k*-','DisplayName','Base')
 grid on
 hold on
 for i=1:length(target)
-    plot(op_pts.wsp,op_pts.pitch_tuned{i},'*-','color',Plot_cols(i),'DisplayName',num2str(round(target(i))));
+    plot(op_pts.wsp,op_pts.pitch_tuned{i},'*-','color',plot_cols(i),'DisplayName',[num2str(round(target(i)/max(output(:,3)),2)) ' %']);
 end
 xlabel('Wind Speed (m/s)');
 ylabel('Pitch (deg)');
-leg = legend('location','best');
-title(leg,'-Mx11h target')
+leg = legend('location','nw');
+title(leg,{'Max Flap' ,'Load target'})
 
 subplot(2,2,2)
-plot(op_pts.wsp,output(:,3),'k*-','DisplayName','TL Off')
+plot(op_pts.wsp,output(:,3),'k*-','DisplayName','Base')
 grid on
 hold on
 for i=1:length(target)
-    plot(op_pts.wsp,output_tuned{i}(:,3),'*-','color',Plot_cols(i),'DisplayName',num2str(round(target(i))));
+    plot(op_pts.wsp,output_tuned{i}(:,3),'*-','color',plot_cols(i),'DisplayName',[num2str(round(target(i)/max(output(:,3)),2)) ' %']);
 end
 xlabel('Wind Speed (m/s)');
-ylabel('-Mx11h (kNm)');
-leg = legend('location','best');
-title(leg,'-Mx11h target')
+ylabel('Root flap load (kNm)');
+% leg = legend('location','best');
+% title(leg,'Load target')
 
 
 P_rot_TLOff = output(:,5).*(2*pi.*op_pts.rpm/60); % Rotor power calculated from Maero
@@ -90,18 +84,18 @@ k=2.5;
 
 hfig=subplot(2,2,3);
 yyaxis left
-plot(op_pts.wsp,P_rot_TLOff,'k*-','DisplayName','TL Off');
+plot(op_pts.wsp,P_rot_TLOff,'k*-','DisplayName','Base');
 hold on
 grid on
 for i=1:length(target)
     P_rot_tuned(:,i) = output_tuned{i}(:,5).*(2*pi.*op_pts.rpm/60); % Rotor power calculated from Maero
     [AEP_MWh_tuned(i), ~] = AEP(op_pts.wsp,P_rot_tuned(:,i),M,k);
-    plot(op_pts.wsp,P_rot_tuned(:,i),'*-','color',Plot_cols(i),'DisplayName',num2str(round(target(i))));
+    plot(op_pts.wsp,P_rot_tuned(:,i),'*-','color',plot_cols(i),'DisplayName',[num2str(round(target(i)/max(output(:,3)),2)) ' %']);
 end
 xlabel('Wind Speed (m/s)');
 ylabel('Rotor Power (kW)');
-leg = legend('location','se');
-title(leg,'-Mx11h target')
+% leg = legend('location','se');
+% title(leg,'Load target')
 title(sprintf('M = %0.1f, k = %0.2f',M,k))
 
 yyaxis right
@@ -119,56 +113,32 @@ plot(AEP_drop,load_drop,'k--')
 grid on
 hold on
 for i=1:length(AEP_drop)
-    plot(AEP_drop(i),load_drop(i),'*','color',Plot_cols(i))
+    plot(AEP_drop(i),load_drop(i),'*','color',plot_cols(i))
 end
-xlabel('AEP Drop in %');
+xlabel('AEP Drop in % (w.r.t. Base)');
 ylabel('Flap Load drop in %');
 P = polyfit(AEP_drop,load_drop,1);
 txt = {sprintf('Slope = %0.2f',P(1));sprintf('Intercept = %0.2f',P(2))};
 xl=xlim;
 yl=ylim;
-text(mean(xl)+0.01/mean(xl),mean(ylim),txt)
+% text(mean(xl),mean(ylim),txt)
 title(sprintf('M = %0.1f, k = %0.2f',M,k))
 
 %% Supporting functions
 
-function out = solve_for_pitch(rho, wsp, x, rpm, BLD, AeroFlags)
-    N=3;
-    op_pts.wsp = wsp;
+function flap_loads = solve_for_pitch(x, General, op_pts, BLD)
     op_pts.pitch = x; % Operational set points, Collective Pitch [deg]
-    op_pts.rpm = rpm; % Operational set points, LSS Rotor speed [rpm]
-    [~, results] = core_bem(rho, N, op_pts, BLD, AeroFlags);
-    out = results(:,3); % Choosing the flap load as target output
+    [~, results,~] = core_bem(General, op_pts, BLD);
+    flap_loads = results(:,3); % Choosing the flap load as target output
 end
 
 
 
 
-function [AEP_MWh, Energy] = AEP(WSP,P,M,k)
-    A                  = M/(gamma(1+1/k));
-    CDF                = 1-exp(-(WSP/A).^k);
-    N_CDF              = length(CDF);
-    for ii = 1:N_CDF-1
-        Time(ii)        = CDF(ii+1)-CDF(ii);
-        MeanP(ii)       = (P(ii+1)+P(ii))/2;
-    end
-    Energy             = Time.*MeanP;
-    AEP_MWh            = sum(Energy)*8760/1000;
-end
 
 
-function out = Plot_cols(i)
-    col = [0    0.4470    0.7410;  % Blue
-        0.8500    0.3250    0.0980; % Red
-        0.9290    0.6940    0.1250; % Yellow
-        0.4940    0.1840    0.5560; % Purple
-        0.4660    0.6740    0.1880; % Green
-        0.3010    0.7450    0.9330; % Light Blue
-        0.6350    0.0780    0.1840];% Dark Red
-    
-    i = mod(i-1,length(col(:,1)))+1;
-    out = col(i,:);
-end
+
+
 
 
 
