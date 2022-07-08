@@ -1,29 +1,46 @@
-function [thickness, AoA, cL, cD] = read_pc_file(pc)
-    fid = fopen(pc,'r');
-    fid1 = fopen(pc,'r');
+function [thickness, AoA, cL, cD] = read_pc_file(file)
+%     coder.inline('never');
+    fid = fopen(file,'r');
     
-    nT = textscan(fid, '%f', 1, 'HeaderLines', 1, 'CollectOutput', 1);
-    nT = nT{1,1}; % No. of tables
-    entries = zeros(nT,1);
+    i=1;
+    while ~feof(fid)
+        tline = fgetl(fid);
+        i=i+1;
+    end
+    n_lines =i-1;
+    fclose(fid);
     
-    j=1;
-    for i=1:nT
-        tline = textscan(fid, '%f%f%f', 1, 'HeaderLines', j, 'CollectOutput', 1);
-        entries(i,1) = tline{1,1}(2);
-        thickness(i,1) = tline{1,1}(3);
-        if i==1
-            section(i,1) = textscan(fid1, '%f%f%f%f%f%f', entries(i,1), 'HeaderLines', 3, 'CollectOutput', 1);
-        else
-            section(i,1) = textscan(fid1, '%f%f%f%f%f%f', entries(i,1), 'HeaderLines', 2, 'CollectOutput', 1);
-        end
-        j=entries(i,1)+1;
+    fid = fopen(file,'r');
+    tmp = cell(n_lines,1);
+
+    for i=1:n_lines
+        tmp{i,1} = fgetl(fid);
     end
     fclose(fid);
-    fclose(fid1);
-    % Linear interpolation to make sure all the data is in same size
+    
+    nT = real(str2double(tmp{2}));
+    entries = zeros(nT,1);
+    thickness = zeros(nT,1);
+    
     AoA = (-179:1:180)';
+    cL = zeros(length(AoA),length(thickness));
+    cD = zeros(length(AoA),length(thickness));
+    
+    k=3; % Data tables start from line 3 in HAWC2 pc file
     for i=1:nT
-        cL(:,i) = interp1(section{i,1}(:,1),section{i,1}(:,2),AoA);
-        cD(:,i) = interp1(section{i,1}(:,1),section{i,1}(:,3),AoA);
+        tline = split_string(tmp{k,1},' ');
+        entries(i,1) = real(str2double(tline{1,2}));
+        thickness(i,1) = real(str2double(tline{1,3}));
+        section = zeros(entries(i,1),4);
+        for j=1:entries(i)
+            tline = split_string(strtrim(tmp{j+k,1}),' ');
+            for n=1:4
+                section(j,n) = real(str2double(tline{n}));
+            end
+        end
+        % Linear interpolation to make sure all the data is in same size
+        cL(:,i) = interp1(section(:,1),section(:,2),AoA);
+        cD(:,i) = interp1(section(:,1),section(:,3),AoA);
+        k=k+entries(i,1)+1;
     end
 end
