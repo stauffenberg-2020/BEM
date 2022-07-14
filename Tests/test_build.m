@@ -1,5 +1,14 @@
-cd ..
+files = dir(pwd);
+dirFlags = [files.isdir];
+subFolders = files(dirFlags);
+subFolderNames = {subFolders(3:end).name}; 
+if isempty(subFolderNames)
+    cd ..
+elseif ~any(strcmp(subFolderNames,'Tests'))
+    cd ..
+end
 addpath(genpath(pwd))
+
 cd Compile/
 warning('off','all');
 
@@ -8,7 +17,7 @@ licens = str2double(extractAfter(licen,'='));
 
 if licens == 1
     % Build library
-    codegen -report -config:lib bem_calc.m -args {'NREL_5MW.txt'}
+    codegen -report -config:lib bem_calc.m -args {coder.typeof('NREL_5MW.txt',[1,inf])}
     disp('Library build successful')
 
     % Build MEX

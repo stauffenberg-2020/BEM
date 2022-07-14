@@ -1,7 +1,15 @@
-filename = 'NREL_5MW.txt';
-cd ..
+files = dir(pwd);
+dirFlags = [files.isdir];
+subFolders = files(dirFlags);
+subFolderNames = {subFolders(3:end).name}; 
+if isempty(subFolderNames)
+    cd ..
+elseif ~any(strcmp(subFolderNames,'Tests'))
+    cd ..
+end
 addpath(genpath(pwd))
 
+filename = 'NREL_5MW.txt';
 [General, op_pts, Blade, ~] = read_turbine_file(filename);
 
 Blade.preflap = zeros(length(Blade.r),1);
