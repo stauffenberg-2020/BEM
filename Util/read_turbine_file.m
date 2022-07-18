@@ -60,8 +60,9 @@ function [General, op_pts, Blade, Control] = read_turbine_file(file)
                     end
                 end
                 op_pts.wsp=data(:,1);
-                op_pts.pitch = data(:,2);
-                op_pts.rpm = data(:,3);
+                op_pts.shear = data(:,2);
+                op_pts.pitch = data(:,3);
+                op_pts.rpm = data(:,4);
             case 'BLADE_DETAILS'
                 headers = split_string(filebyline{header_row_ids(i)+1},' ');
                 data_bld = zeros(header_row_ids(i+1)-header_row_ids(i)-3,length(headers));

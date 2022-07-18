@@ -53,9 +53,9 @@ function write_turbine_file(Data,filename)
             fprintf(fileID,'\n');
         elseif strncmpi(header_titles{i}, 'OPERATIONAL_SET_POINTS',22)
             fprintf(fileID,'# %s\n',header_titles{i});
-            fprintf(fileID,'wsp\tpitch\trpm\n');
+            fprintf(fileID,'wsp\tshear\tpitch\trpm\n');
             for j=1:size(Data.(header_titles{i}),1)
-                fprintf(fileID,'%d\t%0.3f\t%0.2f\n',Data.(header_titles{i})(j,1),Data.(header_titles{i})(j,2),Data.(header_titles{i})(j,3));
+                fprintf(fileID,'%d\t%0.1f\t%0.3f\t%0.2f\n',Data.(header_titles{i})(j,1),0,Data.(header_titles{i})(j,2),Data.(header_titles{i})(j,3));
             end
             fprintf(fileID,'\n');
         elseif strncmpi(header_titles{i}, 'BLADE_DETAILS',13)
