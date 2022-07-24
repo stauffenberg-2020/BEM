@@ -10,8 +10,6 @@
     pitch = op_pts.pitch;
     rpm = op_pts.rpm;
     
-    if all(shear == 0), bld_calcs = 1; else bld_calcs =3; end
-    
 %     BEM = initialize_structs(); % Pre-initializing structure for MATLAB Codegen
               
     BEM.r = BLD.r; % Blade stations
@@ -29,50 +27,30 @@
     BEM.sig = BEM.C*General.N./(2*pi.*BEM.r); % Solidity ratio
     
     bld_id = {'b1','b2','b3'}; % b = fieldnames(BEM.aA); % Getting the blade struct field names
-    if bld_calcs == 1 % Condition for whether to skip 2nd and 3rd blade calculation
-        id = 1;
-        b = bld_id{id};
-        az = ['az_ind']; 
-        BEM.(b).(az).aA = zeros(length(BEM.r),size(wsp,1)); % Initializing axial induction factors 
-        BEM.(b).(az).aT = zeros(length(BEM.r),size(wsp,1)); % Initializing tangential induction factors 
-        BEM.(b).(az).V_Res = sqrt(repmat((wsp.^2)',length(BEM.r),1)+BEM.Omega_r.^2); % Resultant velocity seen by each of the section [m/s]
-        BEM.(b).(az).phi = atan2d((repmat(wsp',length(BEM.r),1).*(1-BEM.(b).(az).aA)),(BEM.Omega_r.*(1+BEM.(b).(az).aT))); % Calculating flow angle PHI [deg]
-        BEM.(b).(az).alpha = BEM.(b).(az).phi-repmat(BEM.AeroTwist,1,length(wsp))-repmat(pitch',length(BEM.r),1); % Angle of attack seen by each section [deg]
-        [BEM.(b).(az).CL, BEM.(b).(az).CD] = CL_CD_vs_alpha(BEM.t_C, BLD.pro_t_C, BLD.pro_AoA, BLD.pro_cL, BLD.pro_cD, BEM.(b).(az).alpha); % CL, CD coefficients
-        BEM.(b).(az).CN = BEM.(b).(az).CL.*cosd(BEM.(b).(az).phi)+BEM.(b).(az).CD.*sind(BEM.(b).(az).phi); % Sectional Normal force coefficient
-        BEM.(b).(az).CT = BEM.(b).(az).CL.*sind(BEM.(b).(az).phi)-BEM.(b).(az).CD.*cosd(BEM.(b).(az).phi); % Sectional Tangential force coefficient
-        if General.induction % Condition for doing induction calculations
-            tmp_BEM_inp = BEM_to_temp_BEM(BEM, b, az, 1:length(BEM.r), 1:length(wsp));
-            BLD.R = BLD.r(end);
-            BEM.(b).(az) = iterate_for_induction(General, tmp_BEM_inp, PRO, BLD, wsp, pitch);
-            clear tmp_BEM_inp;
-        end
 
-    else
-        for id=1:numel(bld_id) % Loop for each of the blades
-            b = bld_id{id};
-            azimuths = [0:30:360];
-            for k = 1:length(azimuths) % Loop for different azimuth positions of blade
-                az = ['az_',num2str(azimuths(k),'%03d')];
-                BEM.(b).(az).aA = zeros(length(BEM.r),size(wsp,1)); % Initializing axial induction factors 
-                BEM.(b).(az).aT = zeros(length(BEM.r),size(wsp,1)); % Initializing tangential induction factors 
-                for o = 1:length(wsp) % Loop for different operating points
-                    for s=1:length(BEM.r) % Loop for different sections of the blade
-                        if id == 2, azi = mod(azimuths(k)+120,360); elseif id ==3, azi = mod(azimuths(k)+240,360); else azi = mod(azimuths(k),360); end;
-                        BEM.(b).(az).wsp_sh(s,o) = wsp_vs_azim(wsp(o), shear(o), azi ,90, BEM.r(s)); % sheared wind speed across height w.r.t rotor azimuth
-                        BEM.(b).(az).V_Res(s,o) = sqrt(repmat((BEM.(b).(az).wsp_sh(s,o).^2)',length(BEM.r(s)),1)+BEM.Omega_r(s,o).^2); % Resultant velocity seen by each of the section [m/s]
-                        BEM.(b).(az).phi(s,o) = atan2d((repmat(BEM.(b).(az).wsp_sh(s,o)',length(BEM.r(s)),1).*(1-BEM.(b).(az).aA(s,o))),(BEM.Omega_r(s,o).*(1+BEM.(b).(az).aT(s,o)))); % Calculating flow angle PHI [deg]
-                        BEM.(b).(az).alpha(s,o) = BEM.(b).(az).phi(s,o)-BEM.AeroTwist(s)-pitch(o); % Angle of attack seen by each section [deg]
-                        [BEM.(b).(az).CL(s,o), BEM.(b).(az).CD(s,o)] = CL_CD_vs_alpha(BEM.t_C(s), BLD.pro_t_C, BLD.pro_AoA, BLD.pro_cL, BLD.pro_cD, BEM.(b).(az).alpha(s,o)); % CL, CD coefficients
-                        BEM.(b).(az).CN(s,o) = BEM.(b).(az).CL(s,o).*cosd(BEM.(b).(az).phi(s,o))+BEM.(b).(az).CD(s,o).*sind(BEM.(b).(az).phi(s,o)); % Sectional Normal force coefficient
-                        BEM.(b).(az).CT(s,o) = BEM.(b).(az).CL(s,o).*sind(BEM.(b).(az).phi(s,o))-BEM.(b).(az).CD(s,o).*cosd(BEM.(b).(az).phi(s,o)); % Sectional Tangential force coefficient
-                        if General.induction % Condition for doing induction calculations
-                            tmp_BEM_inp = BEM_to_temp_BEM(BEM, b, az, s, o);
-                            local_BLD = BLD_to_local_BLD(BLD, s);
-                            tmp_BEM_out = iterate_for_induction(General, tmp_BEM_inp, PRO, local_BLD, BEM.(b).(az).wsp_sh(s,o), pitch(o));
-                            BEM = temp_BEM_to_BEM(tmp_BEM_out, BEM, b, az, s, o);
-                            clear tmp_inp_BEM local_BLD tmp_BEM_out;
-                        end
+    for id=1:numel(bld_id) % Loop for each of the blades
+        b = bld_id{id};
+        azimuths = [0:30:360];
+        for k = 1:length(azimuths) % Loop for different azimuth positions of blade
+            az = ['az_',num2str(azimuths(k),'%03d')];
+            BEM.(b).(az).aA = zeros(length(BEM.r),size(wsp,1)); % Initializing axial induction factors 
+            BEM.(b).(az).aT = zeros(length(BEM.r),size(wsp,1)); % Initializing tangential induction factors 
+            for o = 1:length(wsp) % Loop for different operating points
+                for s=1:length(BEM.r) % Loop for different sections of the blade
+                    if id == 2, azi = mod(azimuths(k)+120,360); elseif id ==3, azi = mod(azimuths(k)+240,360); else azi = mod(azimuths(k),360); end;
+                    BEM.(b).(az).wsp_sh(s,o) = wsp_vs_azim(wsp(o), shear(o), azi ,90, BEM.r(s)); % sheared wind speed across height w.r.t rotor azimuth
+                    BEM.(b).(az).V_Res(s,o) = sqrt(repmat((BEM.(b).(az).wsp_sh(s,o).^2)',length(BEM.r(s)),1)+BEM.Omega_r(s,o).^2); % Resultant velocity seen by each of the section [m/s]
+                    BEM.(b).(az).phi(s,o) = atan2d((repmat(BEM.(b).(az).wsp_sh(s,o)',length(BEM.r(s)),1).*(1-BEM.(b).(az).aA(s,o))),(BEM.Omega_r(s,o).*(1+BEM.(b).(az).aT(s,o)))); % Calculating flow angle PHI [deg]
+                    BEM.(b).(az).alpha(s,o) = BEM.(b).(az).phi(s,o)-BEM.AeroTwist(s)-pitch(o); % Angle of attack seen by each section [deg]
+                    [BEM.(b).(az).CL(s,o), BEM.(b).(az).CD(s,o)] = CL_CD_vs_alpha(BEM.t_C(s), BLD.pro_t_C, BLD.pro_AoA, BLD.pro_cL, BLD.pro_cD, BEM.(b).(az).alpha(s,o)); % CL, CD coefficients
+                    BEM.(b).(az).CN(s,o) = BEM.(b).(az).CL(s,o).*cosd(BEM.(b).(az).phi(s,o))+BEM.(b).(az).CD(s,o).*sind(BEM.(b).(az).phi(s,o)); % Sectional Normal force coefficient
+                    BEM.(b).(az).CT(s,o) = BEM.(b).(az).CL(s,o).*sind(BEM.(b).(az).phi(s,o))-BEM.(b).(az).CD(s,o).*cosd(BEM.(b).(az).phi(s,o)); % Sectional Tangential force coefficient
+                    if General.induction % Condition for doing induction calculations
+                        tmp_BEM_inp = BEM_to_temp_BEM(BEM, b, az, s, o);
+                        local_BLD = BLD_to_local_BLD(BLD, s);
+                        tmp_BEM_out = iterate_for_induction(General, tmp_BEM_inp, PRO, local_BLD, BEM.(b).(az).wsp_sh(s,o), pitch(o));
+                        BEM = temp_BEM_to_BEM(tmp_BEM_out, BEM, b, az, s, o);
+                        clear tmp_inp_BEM local_BLD tmp_BEM_out;
                     end
                 end
             end
@@ -89,31 +67,22 @@
     % Sectional loads in Blade root coords
     for id=1:numel(bld_id)
         b = bld_id{id};
-        if id <= bld_calcs
-            BEM.(b).Q_L = 0.5*General.rho.*BEM.(b).V_Res_avg.*BEM.(b).V_Res_avg; % Local Dynamic pressure for each station
-            BEM.(b).FlapdF = BEM.(b).Q_L.*repmat(BEM.C,1,length(wsp)).*BEM.(b).CN_avg.*repmat(cosd(BEM.PreBendTwist),1,length(wsp)); % Local Thrust/Normal force [N], Check this
-            BEM.(b).Rad_dF = BEM.(b).Q_L.*repmat(BEM.C,1,length(wsp)).*BEM.(b).CN_avg.*repmat(sind(BEM.PreBendTwist),1,length(wsp)); % Local Radial force [N], Check this
-            BEM.(b).EdgedF = BEM.(b).Q_L.*repmat(BEM.C,1,length(wsp)).*BEM.(b).CT_avg; % Local Edge force [N]
-            BEM.(b).FlapdM = BEM.(b).FlapdF.*repmat(BEM.r-BEM.r(1),1,length(wsp))+BEM.(b).Rad_dF.*repmat((-BEM.preflap),1,length(wsp)); % Local Flap Moment [Nm] at Hub end (or Blade root)
-            BEM.(b).EdgedM = BEM.(b).EdgedF.*repmat(BEM.r-BEM.r(1),1,length(wsp)); % Local Edge Moment [Nm] at Hub end (or Blade root)
-        end
+        BEM.(b).Q_L = 0.5*General.rho.*BEM.(b).V_Res_avg.*BEM.(b).V_Res_avg; % Local Dynamic pressure for each station
+        BEM.(b).FlapdF = BEM.(b).Q_L.*repmat(BEM.C,1,length(wsp)).*BEM.(b).CN_avg.*repmat(cosd(BEM.PreBendTwist),1,length(wsp)); % Local Thrust/Normal force [N], Check this
+        BEM.(b).Rad_dF = BEM.(b).Q_L.*repmat(BEM.C,1,length(wsp)).*BEM.(b).CN_avg.*repmat(sind(BEM.PreBendTwist),1,length(wsp)); % Local Radial force [N], Check this
+        BEM.(b).EdgedF = BEM.(b).Q_L.*repmat(BEM.C,1,length(wsp)).*BEM.(b).CT_avg; % Local Edge force [N]
+        BEM.(b).FlapdM = BEM.(b).FlapdF.*repmat(BEM.r-BEM.r(1),1,length(wsp))+BEM.(b).Rad_dF.*repmat((-BEM.preflap),1,length(wsp)); % Local Flap Moment [Nm] at Hub end (or Blade root)
+        BEM.(b).EdgedM = BEM.(b).EdgedF.*repmat(BEM.r-BEM.r(1),1,length(wsp)); % Local Edge Moment [Nm] at Hub end (or Blade root)
     end
     
-    if bld_calcs == 1
-        BEM.FlapdF_max = BEM.b1.FlapdF;
-        BEM.EdgedF_max = BEM.b1.EdgedF;
-        BEM.FlapdM_max = BEM.b1.FlapdM;
-        BEM.EdgedM_max = BEM.b1.EdgedM;
-        BEM.EdgedMC_all = General.N*BEM.b1.EdgedF.*repmat(BEM.r,1,length(wsp));
-        BEM.dT = General.N*BEM.b1.FlapdF;
-    else
-        BEM.FlapdF_max = max(max(BEM.b1.FlapdF, BEM.b2.FlapdF), BEM.b3.FlapdF);
-        BEM.EdgedF_max = max(max(BEM.b1.EdgedF, BEM.b2.EdgedF), BEM.b3.EdgedF);
-        BEM.FlapdM_max = max(max(BEM.b1.FlapdM, BEM.b2.FlapdM), BEM.b3.FlapdM);
-        BEM.EdgedM_max = max(max(BEM.b1.EdgedM, BEM.b2.EdgedM), BEM.b3.EdgedM);
-        BEM.EdgedMC_all = (BEM.b1.EdgedF + BEM.b2.EdgedF + BEM.b3.EdgedF).*repmat(BEM.r,1,length(wsp)); % Local Edge Moment [Nm] (w.r.t rotor center) in blade root coords
-        BEM.dT = BEM.b1.FlapdF+BEM.b2.FlapdF+BEM.b3.FlapdF; % Full Rotor loads
-    end 
+
+    BEM.FlapdF_max = max(max(BEM.b1.FlapdF, BEM.b2.FlapdF), BEM.b3.FlapdF);
+    BEM.EdgedF_max = max(max(BEM.b1.EdgedF, BEM.b2.EdgedF), BEM.b3.EdgedF);
+    BEM.FlapdM_max = max(max(BEM.b1.FlapdM, BEM.b2.FlapdM), BEM.b3.FlapdM);
+    BEM.EdgedM_max = max(max(BEM.b1.EdgedM, BEM.b2.EdgedM), BEM.b3.EdgedM);
+    BEM.EdgedMC_all = (BEM.b1.EdgedF + BEM.b2.EdgedF + BEM.b3.EdgedF).*repmat(BEM.r,1,length(wsp)); % Local Edge Moment [Nm] (w.r.t rotor center) in blade root coords
+    BEM.dT = BEM.b1.FlapdF+BEM.b2.FlapdF+BEM.b3.FlapdF; % Full Rotor loads
+
     BEM.Ct = BEM.dT./(repmat(Q_G,length(BEM.r),1).*2.*pi.*repmat(BEM.r,1,length(wsp))); % Local Thrust Coefficient from local Thrust
     
     %% Output calculations
